@@ -1,0 +1,25 @@
+# =========================
+# Agent
+# =========================
+.github/copilot-instructions.md
+
+
+# =========================
+# Global
+# =========================
+.env
+.env.*
+*.log
+logs/
+tmp/
+temp/
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
