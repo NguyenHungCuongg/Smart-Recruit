@@ -23,3 +23,19 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+*.iml
+*.ipr
+*.iws
+
+# =========================
+# Docker
+# =========================
+postgres_data/
+
+# =========================
+# Backend (Spring Boot)
+# =========================
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
