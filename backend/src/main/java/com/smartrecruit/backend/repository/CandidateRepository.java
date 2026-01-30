@@ -19,7 +19,7 @@ public interface CandidateRepository extends JpaRepository<Candidate, UUID> {
     
     List<Candidate> findByFullNameContainingIgnoreCase(String name);
     
-    @Query("SELECT DISTINCT c FROM Candidate c JOIN FETCH c.cvs")
+    @Query("SELECT DISTINCT c FROM Candidate c JOIN FETCH c.cvList")
     List<Candidate> findAllWithCVs();
     
     long count();

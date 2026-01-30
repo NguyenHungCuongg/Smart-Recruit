@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -34,5 +36,21 @@ public class Candidate {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    @OneToMany(mappedBy = "candidate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CV> cvList = new ArrayList<>();
+
+    // Helper method để add CV
+    public void addCV(CV cv) {
+        cvList.add(cv);
+        cv.setCandidate(this);
+    }
+
+    // Helper method để remove CV
+    public void removeCV(CV cv) {
+        cvList.remove(cv);
+        cv.setCandidate(null);
     }
 }
