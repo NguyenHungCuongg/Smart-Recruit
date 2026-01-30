@@ -68,10 +68,10 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith((javax.crypto.SecretKey) getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     private Key getSigningKey(){
