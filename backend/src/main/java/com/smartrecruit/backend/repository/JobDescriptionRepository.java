@@ -32,6 +32,12 @@ public interface JobDescriptionRepository extends JpaRepository<JobDescription, 
     @Query("SELECT j FROM JobDescription j LEFT JOIN FETCH j.recruiter WHERE j.id = :jobId")
     Optional<JobDescription> findByIdWithRecruiter(@Param("jobId") UUID jobId);
 
+    @Query("SELECT DISTINCT j FROM JobDescription j LEFT JOIN FETCH j.recruiter ORDER BY j.createdAt DESC")
+    List<JobDescription> findAllWithRecruiter();
+
+    @Query("SELECT j FROM JobDescription j LEFT JOIN FETCH j.recruiter WHERE j.recruiter.id = :recruiterId ORDER BY j.createdAt DESC")
+    List<JobDescription> findByRecruiterIdWithRecruiter(@Param("recruiterId") UUID recruiterId);
+
     List<JobDescription> findByTitleContainingIgnoreCase(String title);
 
     long countByRecruiterId(UUID recruiterId);
