@@ -38,6 +38,14 @@ spring:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION}
 
+# First Admin user
+app:
+  init:
+    admin:
+      email: ${INIT_ADMIN_EMAIL:}
+      password: ${INIT_ADMIN_PASSWORD:}
+      full-name: ${INIT_ADMIN_FULL_NAME:Administrator}
+
 # Server Configuration
 server:
   port: 8080

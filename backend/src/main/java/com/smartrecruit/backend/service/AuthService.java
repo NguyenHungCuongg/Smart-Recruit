@@ -4,6 +4,7 @@ import com.smartrecruit.backend.dto.AuthResponse;
 import com.smartrecruit.backend.dto.LoginRequest;
 import com.smartrecruit.backend.dto.RegisterRequest;
 import com.smartrecruit.backend.entity.User;
+import com.smartrecruit.backend.enums.RoleType;
 import com.smartrecruit.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,17 +22,25 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
+    /** Default role for new users when not specified. */
+    public static final RoleType DEFAULT_ROLE = RoleType.RECRUITER;
+
     @Transactional
     public AuthResponse register(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
             throw new RuntimeException("Email already registered");
         }
 
+        RoleType role = request.getRole() != null ? request.getRole() : DEFAULT_ROLE;
+        if (role == RoleType.ADMIN) {
+            role = DEFAULT_ROLE;
+        }
+
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role(request.getRole())
+                .role(role)
                 .build();
 
         userRepository.save(user);
