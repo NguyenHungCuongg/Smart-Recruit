@@ -3,12 +3,14 @@ package com.smartrecruit.backend.service;
 import com.smartrecruit.backend.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 
@@ -75,7 +77,20 @@ public class JwtService {
     }
 
     private Key getSigningKey(){
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretKey);
+        byte[] keyBytes = sha256(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    /**
+     * Hash input to 256 bits (32 bytes) for HS256. Ensures JWT secret meets RFC 7518 minimum key size
+     * regardless of the length of the configured string.
+     */
+    private static byte[] sha256(byte[] input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return digest.digest(input);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 }
