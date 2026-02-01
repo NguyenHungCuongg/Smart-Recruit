@@ -38,8 +38,16 @@ spring:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION}
 
+# File upload (CV storage)
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 # First Admin user
 app:
+  upload:
+    cv-dir: ${CV_UPLOAD_DIR:./uploads/cvs}
   init:
     admin:
       email: ${INIT_ADMIN_EMAIL:}

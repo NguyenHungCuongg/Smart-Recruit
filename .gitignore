@@ -2,7 +2,7 @@
 # Agent
 # =========================
 .github/copilot-instructions.md
-
+.cursor/rules/project-context.mdc
 
 # =========================
 # Global
@@ -39,3 +39,4 @@ backend/target/
 backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd
+uploads/
