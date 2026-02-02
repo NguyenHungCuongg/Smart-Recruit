@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.service;
 
 import com.smartrecruit.backend.domain.cv.CVFeatures;
+import com.smartrecruit.backend.enums.IndustryType;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -8,7 +9,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-//Parser các thông tin cơ bản từ text của CV
+/**
+ * Parser for extracting features from CV text.
+ * Supports multi-industry skill parsing, not limited to IT.
+ */
 @Service
 public class CVFeatureParser {
 
@@ -32,6 +36,7 @@ public class CVFeatureParser {
             "\\b(19|20)\\d{2}\\b"
     );
 
+    // IT/Software Development Skills
     private static final Set<String> PROGRAMMING_LANGUAGES = Set.of(
             "java", "python", "javascript", "typescript", "c#", "c++", "go", "rust", "kotlin", "swift",
             "php", "ruby", "scala", "r", "sql", "html", "css"
@@ -43,17 +48,72 @@ public class CVFeatureParser {
     private static final Set<String> DATABASES = Set.of(
             "postgresql", "mysql", "mongodb", "redis", "sql server", "oracle", "sqlite", "elasticsearch"
     );
+
+    // Marketing Skills
+    private static final Set<String> MARKETING_SKILLS = Set.of(
+            "seo", "sem", "google analytics", "google ads", "facebook ads", "content marketing",
+            "social media marketing", "email marketing", "marketing automation", "copywriting",
+            "content strategy", "brand management", "digital marketing", "inbound marketing",
+            "hubspot", "salesforce marketing cloud", "mailchimp", "hootsuite"
+    );
+
+    // Sales Skills
+    private static final Set<String> SALES_SKILLS = Set.of(
+            "b2b sales", "b2c sales", "crm", "salesforce", "cold calling", "lead generation",
+            "negotiation", "account management", "sales strategy", "pipeline management",
+            "hubspot crm", "zoho crm", "business development", "sales forecasting"
+    );
+
+    // Accounting & Finance Skills
+    private static final Set<String> ACCOUNTING_SKILLS = Set.of(
+            "gaap", "ifrs", "financial reporting", "tax preparation", "auditing", "bookkeeping",
+            "quickbooks", "excel", "financial analysis", "budgeting", "forecasting",
+            "accounts payable", "accounts receivable", "sap", "oracle financials", "cost accounting"
+    );
+
+    // Healthcare Skills
+    private static final Set<String> HEALTHCARE_SKILLS = Set.of(
+            "patient care", "clinical skills", "emr", "electronic medical records", "hipaa",
+            "medical terminology", "cpr", "first aid", "nursing", "diagnostic procedures",
+            "iv therapy", "medication administration", "epic", "cerner"
+    );
+
+    // Universal Soft Skills
     private static final Set<String> SOFT_SKILLS = Set.of(
             "teamwork", "communication", "leadership", "problem solving", "time management",
+            "critical thinking", "adaptability", "creativity", "attention to detail",
             "làm việc nhóm", "giao tiếp", "lãnh đạo", "giải quyết vấn đề"
     );
+
     private static final Set<String> DEGREE_KEYWORDS = Set.of(
             "bachelor", "master", "phd", "degree", "bằng cử nhân", "thạc sĩ", "tiến sĩ",
             "đại học", "university", "college", "cao đẳng", "engineer", "kỹ sư"
     );
 
-    //Parse text thô của CV thành các Features
+    // Map industry to relevant skill sets
+    private static final Map<IndustryType, List<Set<String>>> INDUSTRY_SKILL_POOLS = Map.of(
+            IndustryType.IT, List.of(PROGRAMMING_LANGUAGES, FRAMEWORKS, DATABASES),
+            IndustryType.MARKETING, List.of(MARKETING_SKILLS),
+            IndustryType.SALES, List.of(SALES_SKILLS),
+            IndustryType.ACCOUNTING, List.of(ACCOUNTING_SKILLS),
+            IndustryType.FINANCE, List.of(ACCOUNTING_SKILLS), // Reuse accounting skills
+            IndustryType.HEALTHCARE, List.of(HEALTHCARE_SKILLS)
+    );
+
+    /**
+     * Parse CV text and extract features.
+     * Uses generic skill parsing (all industries combined).
+     */
     public CVFeatures parse(String rawText) {
+        return parse(rawText, null);
+    }
+
+    /**
+     * Parse CV text and extract features for a specific industry.
+     * @param rawText The raw CV text
+     * @param targetIndustry Optional industry hint for focused skill parsing
+     */
+    public CVFeatures parse(String rawText, IndustryType targetIndustry) {
         if (rawText == null || rawText.isBlank()) {
             return emptyFeatures();
         }
@@ -63,7 +123,7 @@ public class CVFeatureParser {
         CVFeatures.PersonalInfo personal = parsePersonal(text, lower);
         CVFeatures.ExperienceInfo experience = parseExperience(text, lower);
         CVFeatures.EducationInfo education = parseEducation(text, lower);
-        CVFeatures.SkillsInfo skills = parseSkills(lower);
+        CVFeatures.SkillsInfo skills = parseSkills(lower, targetIndustry);
 
         return CVFeatures.builder()
                 .personal(personal)
@@ -144,15 +204,28 @@ public class CVFeatureParser {
                 .build();
     }
 
-    private CVFeatures.SkillsInfo parseSkills(String lower) {
-        List<String> langs = findKeywords(lower, PROGRAMMING_LANGUAGES);
-        List<String> fws = findKeywords(lower, FRAMEWORKS);
-        List<String> dbs = findKeywords(lower, DATABASES);
+    private CVFeatures.SkillsInfo parseSkills(String lower, IndustryType targetIndustry) {
+        List<String> domainSkills = new ArrayList<>();
         List<String> soft = findKeywords(lower, SOFT_SKILLS);
+
+        if (targetIndustry != null && INDUSTRY_SKILL_POOLS.containsKey(targetIndustry)) {
+            // Focused parsing: only search relevant skills for the target industry
+            for (Set<String> skillPool : INDUSTRY_SKILL_POOLS.get(targetIndustry)) {
+                domainSkills.addAll(findKeywords(lower, skillPool));
+            }
+        } else {
+            // Generic parsing: search all skill pools across all industries
+            domainSkills.addAll(findKeywords(lower, PROGRAMMING_LANGUAGES));
+            domainSkills.addAll(findKeywords(lower, FRAMEWORKS));
+            domainSkills.addAll(findKeywords(lower, DATABASES));
+            domainSkills.addAll(findKeywords(lower, MARKETING_SKILLS));
+            domainSkills.addAll(findKeywords(lower, SALES_SKILLS));
+            domainSkills.addAll(findKeywords(lower, ACCOUNTING_SKILLS));
+            domainSkills.addAll(findKeywords(lower, HEALTHCARE_SKILLS));
+        }
+
         return CVFeatures.SkillsInfo.builder()
-                .programmingLanguages(langs)
-                .frameworks(fws)
-                .databases(dbs)
+                .domainSkills(domainSkills.isEmpty() ? List.of() : domainSkills)
                 .softSkills(soft)
                 .build();
     }
@@ -175,7 +248,10 @@ public class CVFeatureParser {
                 .personal(CVFeatures.PersonalInfo.builder().name("").email("").phone("").build())
                 .experience(CVFeatures.ExperienceInfo.builder().totalYears(null).positions(null).build())
                 .education(CVFeatures.EducationInfo.builder().highestDegree("").field("").university("").graduationYear(null).build())
-                .skills(CVFeatures.SkillsInfo.builder().programmingLanguages(List.of()).frameworks(List.of()).databases(List.of()).softSkills(List.of()).build())
+                .skills(CVFeatures.SkillsInfo.builder()
+                        .domainSkills(List.of())
+                        .softSkills(List.of())
+                        .build())
                 .mlVectors(null)
                 .build();
     }

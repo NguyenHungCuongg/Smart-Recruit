@@ -32,6 +32,7 @@ public class JobService {
         JobDescription job = JobDescription.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
+                .industry(request.getIndustry())
                 .requirements(request.getRequirements() != null ? request.getRequirements() : new JobRequirements())
                 .status(request.getStatus())
                 .recruiter(currentUser)
@@ -73,6 +74,9 @@ public class JobService {
         if (request.getDescription() != null) {
             job.setDescription(request.getDescription());
         }
+        if (request.getIndustry() != null) {
+            job.setIndustry(request.getIndustry());
+        }
         if (request.getRequirements() != null) {
             job.setRequirements(request.getRequirements());
         }
@@ -98,6 +102,7 @@ public class JobService {
                 .id(job.getId())
                 .title(job.getTitle())
                 .description(job.getDescription())
+                .industry(job.getIndustry())
                 .requirements(job.getRequirements())
                 .status(job.getStatus())
                 .createdAt(job.getCreatedAt())

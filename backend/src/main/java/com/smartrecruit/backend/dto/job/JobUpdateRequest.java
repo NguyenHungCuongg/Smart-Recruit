@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.dto.job;
 
 import com.smartrecruit.backend.domain.job.JobRequirements;
+import com.smartrecruit.backend.enums.IndustryType;
 import com.smartrecruit.backend.enums.JobStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
@@ -19,6 +20,8 @@ public class JobUpdateRequest {
     private String title;
 
     private String description;
+
+    private IndustryType industry;
 
     @Valid
     private JobRequirements requirements;

@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.dto.job;
 
 import com.smartrecruit.backend.domain.job.JobRequirements;
+import com.smartrecruit.backend.enums.IndustryType;
 import com.smartrecruit.backend.enums.JobStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,7 @@ public class JobResponse {
     private UUID id;
     private String title;
     private String description;
+    private IndustryType industry;
     private JobRequirements requirements;
     private JobStatus status;
     private LocalDateTime createdAt;

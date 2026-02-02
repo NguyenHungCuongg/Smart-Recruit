@@ -2,6 +2,7 @@ package com.smartrecruit.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smartrecruit.backend.domain.cv.CVFeatures;
+import com.smartrecruit.backend.enums.IndustryType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -32,6 +33,10 @@ public class CV {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private CVFeatures features;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "primary_industry", length = 50)
+    private IndustryType primaryIndustry;
 
     @Column(name = "uploaded_at", nullable = false, updatable = false)
     private LocalDateTime uploadedAt;

@@ -2,6 +2,7 @@ package com.smartrecruit.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smartrecruit.backend.domain.job.JobRequirements;
+import com.smartrecruit.backend.enums.IndustryType;
 import com.smartrecruit.backend.enums.JobStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,6 +30,10 @@ public class JobDescription {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "industry", length = 50)
+    private IndustryType industry;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

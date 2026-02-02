@@ -67,9 +67,7 @@ public class CVFeatures {
     @AllArgsConstructor
     @Builder
     public static class SkillsInfo {
-        private List<String> programmingLanguages;
-        private List<String> frameworks;
-        private List<String> databases;
+        private List<String> domainSkills;
         private List<String> softSkills;
     }
 
