@@ -12,9 +12,10 @@ def load_skills(skills_json: str) -> Set[str]:
     except:
         return set()
 
+# Hàm chấm điểm theo độ match kĩ năng
 def compute_skill_match_score(job_skills: Set[str], cv_skills: Set[str]) -> float:
     if not job_skills:
-        return 50.0  # Neutral score if no job skills specified
+        return 50.0  
     
     if not cv_skills:
         return 0.0
@@ -22,10 +23,10 @@ def compute_skill_match_score(job_skills: Set[str], cv_skills: Set[str]) -> floa
     intersection = job_skills & cv_skills
     union = job_skills | cv_skills
     
-    # Jaccard similarity
+    # Thuật toán Jaccard similarity (CV và JD giống nhau bao nhiêu %)
     jaccard = len(intersection) / len(union) if union else 0
     
-    # Coverage: how many job requirements are met
+    # Thuật toán Coverage (CV đáp ứng được bao nhiêu yêu cầu của JD)
     coverage = len(intersection) / len(job_skills) if job_skills else 0
     
     # Weighted score: 60% coverage + 40% jaccard
@@ -35,10 +36,10 @@ def compute_skill_match_score(job_skills: Set[str], cv_skills: Set[str]) -> floa
 
 def compute_experience_score(job_exp: int, cv_exp: int) -> float:
     if pd.isna(job_exp):
-        return 50.0  # Neutral if no requirement
+        return 50.0  
     
     if pd.isna(cv_exp):
-        return 20.0  # Low score if experience unknown
+        return 20.0  
     
     diff = abs(job_exp - cv_exp)
     
@@ -51,37 +52,41 @@ def compute_experience_score(job_exp: int, cv_exp: int) -> float:
     elif diff <= 3:
         return 40.0
     else:
-        # Proportional decay
+        # Dùng Proportional decay để hạ điểm tốt hơn
         return max(0.0, 40.0 - (diff - 3) * 10)
 
 def compute_education_score(job_edu: str, cv_edu: str) -> float:
     if pd.isna(job_edu):
-        return 50.0  # Neutral if no requirement
+        return 50.0 
     
     if pd.isna(cv_edu):
-        return 30.0  # Low score if unknown
+        return 30.0  
     
-    # Education hierarchy
-    edu_levels = {'bachelor': 1, 'master': 2, 'phd': 3}
+    edu_levels = {
+        'high school': 0,
+        'undergraduate': 1,
+        'bachelor': 2,
+        'master': 3,
+        'phd': 4
+    }
     
     job_level = edu_levels.get(job_edu.lower(), 0)
     cv_level = edu_levels.get(cv_edu.lower(), 0)
     
     if cv_level >= job_level:
-        return 100.0  # Meets or exceeds requirement
+        return 100.0
     elif cv_level == job_level - 1:
-        return 60.0  # One level below
+        return 60.0
     else:
-        return 30.0  # Significantly below
+        return 30.0
 
 def compute_seniority_score(job_seniority: str, cv_exp: int) -> float:
     if pd.isna(job_seniority):
-        return 50.0  # Neutral
+        return 50.0
     
     if pd.isna(cv_exp):
-        return 30.0  # Unknown experience
-    
-    # Seniority expectations (in years)
+        return 30.0
+
     seniority_exp = {
         'intern': (0, 0),
         'junior': (0, 2),
@@ -94,13 +99,12 @@ def compute_seniority_score(job_seniority: str, cv_exp: int) -> float:
     min_exp, max_exp = seniority_exp.get(job_seniority.lower(), (0, 50))
     
     if min_exp <= cv_exp <= max_exp:
-        return 100.0  # Perfect fit
+        return 100.0
     elif cv_exp < min_exp:
-        # Under-qualified
         gap = min_exp - cv_exp
         return max(20.0, 100.0 - gap * 20)
     else:
-        # Over-qualified (still good but slight penalty)
+        # Nếu có Over-qualified thì vẫn nên bị trừ ít điểm
         gap = cv_exp - max_exp
         return max(70.0, 100.0 - gap * 5)
 
@@ -124,7 +128,7 @@ def compute_overall_score(job_row: pd.Series, cv_row: pd.Series) -> float:
         cv_row.get('experience_years')
     )
     
-    # Weighted average: Skills are most important
+    # Weighted average: Skills vẫn nên là thứ quan trọng nhất
     # 50% skills, 20% experience, 15% education, 15% seniority
     overall = (
         skill_score * 0.50 +
@@ -133,12 +137,13 @@ def compute_overall_score(job_row: pd.Series, cv_row: pd.Series) -> float:
         seniority_score * 0.15
     )
     
-    # Add small random noise to make it more realistic
+    # Tạo noise để thực tế hơn
     noise = np.random.normal(0, 2)
     overall = np.clip(overall + noise, 0, 100)
     
     return round(overall, 2)
 
+#Ghép JD với CV để tạo sample
 def generate_training_pairs(jobs_df: pd.DataFrame, cvs_df: pd.DataFrame, samples_per_job: int = 50) -> pd.DataFrame:
     training_data = []
     
@@ -146,14 +151,13 @@ def generate_training_pairs(jobs_df: pd.DataFrame, cvs_df: pd.DataFrame, samples
     print(f"Total jobs: {len(jobs_df)}, Total CVs: {len(cvs_df)}")
     
     for job_idx, job_row in jobs_df.iterrows():
-        # Sample random CVs for this job
+        # Lấy CV ngẫu nhiên cho job này
         if len(cvs_df) < samples_per_job:
             sampled_cvs = cvs_df
         else:
             sampled_cvs = cvs_df.sample(n=samples_per_job, replace=False)
         
         for cv_idx, cv_row in sampled_cvs.iterrows():
-            # Compute matching score
             score = compute_overall_score(job_row, cv_row)
             
             training_data.append({
@@ -175,8 +179,7 @@ def main():
     print("=" * 60)
     print("Generating Training Data for Smart Recruit ML Model")
     print("=" * 60)
-    
-    # Load parsed data
+
     print("\n1. Loading parsed job descriptions...")
     try:
         jobs_df = pd.read_csv('dataset/job_descriptions_parsed.csv')
@@ -194,10 +197,9 @@ def main():
         print("   ✗ Error: cv_features_parsed.csv not found!")
         print("   Please run parse_resumes.py first.")
         return
-    
-    # Generate training pairs
+
     print("\n3. Generating training pairs...")
-    samples_per_job = 50  # Adjust based on dataset size
+    samples_per_job = 50 # Ta sẽ lấy 50 CV cho 1 Job
     training_df = generate_training_pairs(jobs_df, cvs_df, samples_per_job)
     
     print(f"\n   ✓ Generated {len(training_df)} training samples")
@@ -210,19 +212,22 @@ def main():
     print(f"   40-60: {((training_df['score'] >= 40) & (training_df['score'] < 60)).sum()} samples")
     print(f"   60-80: {((training_df['score'] >= 60) & (training_df['score'] < 80)).sum()} samples")
     print(f"   80-100: {(training_df['score'] >= 80).sum()} samples")
-    
-    # Save training data
+
     output_path = 'dataset/training_data.csv'
-    training_df.to_csv(output_path, index=False)
-    print(f"\n✓ Saved training data to: {output_path}")
-    
-    # Display sample
+    try:
+        training_df.to_csv(output_path, index=False)
+        print(f"\n✓ Saved training data to: {output_path}")
+    except PermissionError:
+        print(f"\n✗ Error: Cannot write to {output_path}")
+        print("   The file is currently open in another program (Excel, text editor, etc.)")
+        print("   Please close the file and run the script again.")
+        return
+
     print("\nSample training data:")
     print(training_df[['job_id', 'cv_id', 'score', 'position', 'cv_category']].head(10))
     
     print("\n" + "=" * 60)
     print("Training data generation complete!")
-    print("Next step: Train ML model using training_data.csv")
     print("=" * 60)
 
 if __name__ == "__main__":
