@@ -258,7 +258,7 @@ def main():
     all_parsed_cvs = []
     
     try:
-        for chunk_idx, chunk in enumerate(pd.read_csv('dataset/Resume.csv', chunksize=chunk_size)):
+        for chunk_idx, chunk in enumerate(pd.read_csv('../dataset/raw/Resume.csv', chunksize=chunk_size)):
             print(f"\nProcessing chunk {chunk_idx + 1} ({len(chunk)} resumes)...")
             
             for idx, row in chunk.iterrows():
@@ -291,7 +291,7 @@ def main():
     print("\nIndustry distribution:")
     print(output_df['industry'].value_counts())
 
-    output_path = 'dataset/cv_features_parsed.csv'
+    output_path = '../dataset/processed/cv_features_parsed.csv'
     try:
         output_df.to_csv(output_path, index=False)
         print(f"\n✓ Saved to: {output_path}")

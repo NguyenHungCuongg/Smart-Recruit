@@ -187,7 +187,7 @@ def parse_job_description(row: pd.Series) -> Dict:
 
 def main():
 
-    df = pd.read_csv('dataset/Job_description.csv')
+    df = pd.read_csv('../dataset/raw/Job_description.csv')
     
     print(f"Total job descriptions: {len(df)}")
     print(f"Columns: {df.columns.tolist()}")
@@ -216,7 +216,7 @@ def main():
     print(f"- Jobs with seniority: {output_df['seniority'].notna().sum()}")
     print(f"\nAverage skills per job: {output_df['skills_count'].mean():.2f}")
     
-    output_path = 'dataset/job_descriptions_parsed.csv'
+    output_path = '../dataset/processed/job_descriptions_parsed.csv'
     try:
         output_df.to_csv(output_path, index=False)
         print(f"\n✓ Saved to: {output_path}")

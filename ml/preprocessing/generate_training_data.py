@@ -182,7 +182,7 @@ def main():
 
     print("\n1. Loading parsed job descriptions...")
     try:
-        jobs_df = pd.read_csv('dataset/job_descriptions_parsed.csv')
+        jobs_df = pd.read_csv('../dataset/processed/job_descriptions_parsed.csv')
         print(f"   ✓ Loaded {len(jobs_df)} jobs")
     except FileNotFoundError:
         print("   ✗ Error: job_descriptions_parsed.csv not found!")
@@ -191,7 +191,7 @@ def main():
     
     print("\n2. Loading parsed CV features...")
     try:
-        cvs_df = pd.read_csv('dataset/cv_features_parsed.csv')
+        cvs_df = pd.read_csv('../dataset/processed/cv_features_parsed.csv')
         print(f"   ✓ Loaded {len(cvs_df)} CVs")
     except FileNotFoundError:
         print("   ✗ Error: cv_features_parsed.csv not found!")
@@ -213,7 +213,7 @@ def main():
     print(f"   60-80: {((training_df['score'] >= 60) & (training_df['score'] < 80)).sum()} samples")
     print(f"   80-100: {(training_df['score'] >= 80).sum()} samples")
 
-    output_path = 'dataset/training_data.csv'
+    output_path = '../dataset/processed/training_data.csv'
     try:
         training_df.to_csv(output_path, index=False)
         print(f"\n✓ Saved training data to: {output_path}")
