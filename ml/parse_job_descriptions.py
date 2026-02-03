@@ -36,6 +36,45 @@ SOFT_SKILLS = {
     'critical thinking', 'adaptability', 'creativity', 'attention to detail'
 }
 
+SKILL_VARIANTS = {
+    'lead': 'leadership',
+    'leading': 'leadership',
+    'leader': 'leadership',
+
+    'communicate': 'communication',
+    'communicating': 'communication',
+    'communicator': 'communication',
+
+    'collaborate': 'teamwork',
+    'collaboration': 'teamwork',
+    'collaborative': 'teamwork',
+
+    'solve': 'problem solving',
+    'solving': 'problem solving',
+    'solver': 'problem solving',
+
+    'organize': 'time management',
+    'organized': 'time management',
+    'organizational': 'time management',
+    'organization': 'time management',
+
+    'analyze': 'critical thinking',
+    'analytical': 'critical thinking',
+    'analysis': 'critical thinking',
+
+    'adapt': 'adaptability',
+    'flexible': 'adaptability',
+    'flexibility': 'adaptability',
+
+    'creative': 'creativity',
+    'innovate': 'creativity',
+    'innovative': 'creativity',
+    'innovation': 'creativity',
+
+    'detail-oriented': 'attention to detail',
+    'meticulous': 'attention to detail',
+}
+
 # Option[int] từ module Typing. Optional[int] ≡ int | None => Nghĩa là hàm này có thể trả về None hoặc int
 def extract_experience(text: str) -> Optional[int]:
     if not text:
@@ -47,13 +86,21 @@ def extract_experience(text: str) -> Optional[int]:
         r'(\d+)\+?\s*years?\s+(?:of\s+)?(?:experience|exp)',
         r'(?:minimum|min|at least)\s+(\d+)\s+years?',
         r'(\d+)\s+years?\s+(?:minimum|required)',
-        r'experience\s*:?\s*(\d+)\+?\s*years?'
+        r'experience\s*:?\s*(\d+)\+?\s*years?',
+        r'(\d+)\+?\s*yrs?\s+(?:of\s+)?(?:experience|exp)',
+        r'with\s+(\d+)\+?\s*years?',
+        r'at least\s+(\d+)',
     ]
     
     for pattern in patterns:
         match = re.search(pattern, text_lower)
         if match:
-            return int(match.group(1))
+            try:
+                years = int(match.group(1))
+                if 0 <= years <= 50:
+                    return years
+            except (ValueError, IndexError):
+                continue
     
     return None
 
@@ -64,9 +111,11 @@ def extract_education(text: str) -> Optional[str]:
     text_lower = text.lower()
     
     education_levels = [
-        ('phd', r'\b(?:phd|ph\.d|doctorate)\b'),
-        ('master', r'\b(?:master|masters|mba|m\.s|ms)\b'),
-        ('bachelor', r'\b(?:bachelor|bachelors|b\.s|bs|b\.a|ba|degree)\b'),
+        ('phd', r'\b(?:phd|ph\.d|doctorate|doctoral)\b'),
+        ('master', r'\b(?:master|masters|mba|m\.s|ms|m\.a|ma|graduate degree)\b'),
+        ('bachelor', r'\b(?:bachelor|bachelors|b\.s|bs|b\.a|ba|undergraduate degree|university degree|college degree)\b'),
+        ('undergraduate', r'\b(?:undergraduate|undergrad)\b'),
+        ('high school', r'\b(?:high school|secondary school|diploma|ged)\b'),
     ]
     
     for level, pattern in education_levels:
@@ -80,14 +129,22 @@ def extract_skills(text: str) -> List[str]:
         return []
     
     text_lower = text.lower()
-    found_skills = []
-    
-    # Check domain skills
+    found_skills = set()
+
     for skill in ALL_DOMAIN_SKILLS:
         if skill.lower() in text_lower:
-            found_skills.append(skill)
+            found_skills.add(skill)
+
+    for skill in SOFT_SKILLS:
+        if skill.lower() in text_lower:
+            found_skills.add(skill)
+
+    for variant, standard_skill in SKILL_VARIANTS.items():
+        pattern = r'\b' + re.escape(variant) + r'\b'
+        if re.search(pattern, text_lower):
+            found_skills.add(standard_skill)
     
-    return found_skills
+    return list(found_skills)
 
 def extract_seniority(text: str, position_title: str = "") -> Optional[str]:
     combined_text = (text + " " + position_title).lower()
@@ -120,7 +177,7 @@ def parse_job_description(row: pd.Series) -> Dict:
     return {
         'company_name': company,
         'position_title': position,
-        'skills': json.dumps(skills),  # Store as JSON array
+        'skills': json.dumps(skills),
         'min_experience': min_experience,
         'education': education,
         'seniority': seniority,
@@ -129,7 +186,7 @@ def parse_job_description(row: pd.Series) -> Dict:
     }
 
 def main():
-    print("Loading Job_description.csv...")
+
     df = pd.read_csv('dataset/Job_description.csv')
     
     print(f"Total job descriptions: {len(df)}")
@@ -149,7 +206,6 @@ def main():
             print(f"Error parsing row {idx}: {e}")
             continue
     
-    # Create output DataFrame
     output_df = pd.DataFrame(parsed_jobs)
     
     print(f"\nParsing complete! Parsed {len(output_df)} job descriptions.")
@@ -160,12 +216,16 @@ def main():
     print(f"- Jobs with seniority: {output_df['seniority'].notna().sum()}")
     print(f"\nAverage skills per job: {output_df['skills_count'].mean():.2f}")
     
-    # Save to CSV
     output_path = 'dataset/job_descriptions_parsed.csv'
-    output_df.to_csv(output_path, index=False)
-    print(f"\n✓ Saved to: {output_path}")
+    try:
+        output_df.to_csv(output_path, index=False)
+        print(f"\n✓ Saved to: {output_path}")
+    except PermissionError:
+        print(f"\n✗ Error: Cannot write to {output_path}")
+        print("   The file is currently open in another program (Excel, text editor, etc.)")
+        print("   Please close the file and run the script again.")
+        return
     
-    # Display sample
     print("\nSample parsed jobs:")
     print(output_df[['company_name', 'position_title', 'skills_count', 'min_experience', 'education', 'seniority']].head(10))
 
