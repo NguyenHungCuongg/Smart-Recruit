@@ -104,6 +104,81 @@ def extract_experience(text: str) -> Optional[int]:
     
     return None
 
+def infer_experience_from_seniority(seniority: str) -> Optional[int]:
+    if not seniority:
+        return None
+    
+    seniority_exp_map = {
+        'intern': 0,
+        'junior': 1,
+        'mid': 3,
+        'senior': 5,
+        'manager': 8,
+        'executive': 12
+    }
+    return seniority_exp_map.get(seniority.lower(), None)
+
+def infer_experience_from_education(education: str) -> Optional[int]:
+    if not education:
+        return None
+    
+    edu_exp_map = {
+        'high school': 0,
+        'undergraduate': 0,
+        'bachelor': 0,
+        'master': 2,
+        'phd': 5
+    }
+    return edu_exp_map.get(education.lower(), None)
+
+def infer_experience_from_skills(skills: List[str]) -> Optional[int]:
+    if not skills:
+        return None
+    
+    advanced_skills = {
+        'kubernetes', 'microservices', 'aws', 'azure', 'gcp', 'docker',
+        'spring boot', 'django', 'angular', 'vue', 'mongodb', 'redis',
+        'financial reporting', 'ifrs', 'gaap', 'auditing'
+    }
+    
+    basic_skills = {
+        'excel', 'communication', 'teamwork', 'leadership', 'time management'
+    }
+    
+    advanced_count = sum(1 for skill in skills if skill.lower() in advanced_skills)
+    basic_only = all(skill.lower() in basic_skills for skill in skills)
+    
+    if advanced_count >= 3:
+        return 5
+    elif advanced_count >= 1:
+        return 3
+    elif len(skills) >= 5 and not basic_only:
+        return 2
+    elif len(skills) >= 2:
+        return 1
+    else:
+        return 0
+
+def infer_min_experience(explicit_exp: Optional[int], seniority: str, education: str, skills: List[str]) -> Optional[int]:
+    if explicit_exp is not None:
+        return explicit_exp
+    
+    exp_from_seniority = infer_experience_from_seniority(seniority)
+    if exp_from_seniority is not None:
+        return exp_from_seniority
+    
+    exp_from_education = infer_experience_from_education(education)
+    exp_from_skills = infer_experience_from_skills(skills)
+    
+    if exp_from_education is not None and exp_from_skills is not None:
+        return max(exp_from_education, exp_from_skills)
+    elif exp_from_education is not None:
+        return exp_from_education
+    elif exp_from_skills is not None:
+        return exp_from_skills
+    
+    return None
+
 def extract_education(text: str) -> Optional[str]:
     if not text:
         return None
@@ -170,9 +245,11 @@ def parse_job_description(row: pd.Series) -> Dict:
     description = row.get('job_description', '')
     
     skills = extract_skills(description)
-    min_experience = extract_experience(description)
+    explicit_experience = extract_experience(description)
     education = extract_education(description)
     seniority = extract_seniority(description, position)
+    
+    min_experience = infer_min_experience(explicit_experience, seniority, education, skills)
     
     return {
         'company_name': company,
