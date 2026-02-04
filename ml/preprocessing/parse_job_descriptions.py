@@ -224,22 +224,23 @@ def extract_skills(text: str) -> List[str]:
 def extract_seniority(text: str, position_title: str = "") -> Optional[str]:
     combined_text = (text + " " + position_title).lower()
     
-    seniority_keywords = {
-        'intern': r'\b(?:intern|internship|trainee)\b',
-        'junior': r'\b(?:junior|jr|entry[\s-]?level|associate)\b',
-        'mid': r'\b(?:mid[\s-]?level|intermediate|regular)\b',
-        'senior': r'\b(?:senior|sr|lead|principal|staff)\b',
-        'manager': r'\b(?:manager|management|director|head of)\b',
-        'executive': r'\b(?:executive|vp|vice president|ceo|cto|cfo)\b'
-    }
+    # Kiểm tra theo hierarchy (từ cao xuống)
+    seniority_hierarchy = [
+        ('executive', r'\b(?:executive|vp|vice president|ceo|cto|cfo|chief|president|c-level|chairman|evp)\b'),
+        ('manager', r'\b(?:manager|management|director|head of|supervisor|team lead)\b'),
+        ('senior', r'\b(?:senior|sr\.?|lead(?!\s*generation)|principal|staff|expert)\b'),
+        ('mid', r'\b(?:mid[\s-]?level|intermediate|specialist|analyst|consultant)\b'),
+        ('junior', r'\b(?:junior|jr\.?|entry[\s-]?level|associate|coordinator)\b'),
+        ('intern', r'\b(?:intern|internship|trainee)\b'),
+    ]
     
-    for level, pattern in seniority_keywords.items():
+    for level, pattern in seniority_hierarchy:
         if re.search(pattern, combined_text):
             return level
     
     return None
 
-def parse_job_description(row: pd.Series) -> Dict:
+def parse_job_description(row: pd.Series) -> Dict:  
     company = row.get('company_name', 'Unknown')
     position = row.get('position_title', 'Unknown')
     description = row.get('job_description', '')
