@@ -228,9 +228,9 @@ def extract_seniority(text: str, position_title: str = "") -> Optional[str]:
     seniority_hierarchy = [
         ('executive', r'\b(?:executive|vp|vice president|ceo|cto|cfo|chief|president|c-level|chairman|evp)\b'),
         ('manager', r'\b(?:manager|management|director|head of|supervisor|team lead)\b'),
-        ('senior', r'\b(?:senior|sr\.?|lead(?!\s*generation)|principal|staff|expert)\b'),
-        ('mid', r'\b(?:mid[\s-]?level|intermediate|specialist|analyst|consultant)\b'),
-        ('junior', r'\b(?:junior|jr\.?|entry[\s-]?level|associate|coordinator)\b'),
+        ('senior', r'\b(?:senior|sr\.?|lead(?!\s*generation)|principal|staff|expert|advisor|ii+|iii+|iv+|\d-|\s2\s|\s3\s|\s4\s)\b'),
+        ('mid', r'\b(?:mid[\s-]?level|intermediate|specialist|analyst|consultant|officer|representative|rep\b|agent)\b'),
+        ('junior', r'\b(?:junior|jr\.?|entry[\s-]?level|associate|assistant|coordinator)\b'),
         ('intern', r'\b(?:intern|internship|trainee)\b'),
     ]
     
@@ -239,6 +239,39 @@ def extract_seniority(text: str, position_title: str = "") -> Optional[str]:
             return level
     
     return None
+
+#Fallback: infer seniority từ experience và education khi không extract được từ text
+def infer_seniority_from_attributes(min_experience: Optional[int], education: Optional[str]) -> Optional[str]:
+    
+    # Ưu tiên thứ 1: Experience thresholds
+    if min_experience is not None:
+        if min_experience >= 12:
+            return 'executive'
+        elif min_experience >= 8:
+            return 'manager'
+        elif min_experience >= 5:
+            return 'senior'
+        elif min_experience >= 3:
+            return 'mid'
+        elif min_experience >= 1:
+            return 'junior'
+        else:  # 0 years
+            return 'intern'
+    
+    # Ưu tiên thứ 2: Education fallback 
+    if education:
+        edu_lower = education.lower()
+        if edu_lower == 'phd':
+            return 'senior'  # PhDs typically enter at senior level
+        elif edu_lower == 'master':
+            return 'mid'  # Masters typically mid-level
+        elif edu_lower in ['bachelor', 'undergraduate']:
+            return 'junior'  # Fresh grads
+        elif edu_lower == 'high school':
+            return 'junior'
+    
+    #Mặc định vẫn sẽ là rỗng
+    return ''
 
 def parse_job_description(row: pd.Series) -> Dict:  
     company = row.get('company_name', 'Unknown')
@@ -250,7 +283,12 @@ def parse_job_description(row: pd.Series) -> Dict:
     education = extract_education(description)
     seniority = extract_seniority(description, position)
     
-    min_experience = infer_min_experience(explicit_experience, seniority, education, skills)
+    # Infer min_experience (có thể dùng seniority nếu có)
+    min_experience = infer_min_experience(explicit_exp=explicit_experience, seniority=seniority, education=education, skills=skills)
+    
+    # Fallback: Nếu seniority vẫn None sau extract, infer từ experience/education
+    if seniority is None:
+        seniority = infer_seniority_from_attributes(min_experience, education)
     
     return {
         'company_name': company,
