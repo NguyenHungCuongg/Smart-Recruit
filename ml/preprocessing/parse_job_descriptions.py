@@ -124,8 +124,9 @@ def infer_experience_from_education(education: str) -> Optional[int]:
     
     edu_exp_map = {
         'high school': 0,
+        'associate': 0,    
         'undergraduate': 0,
-        'bachelor': 0,
+        'bachelor': 0,       
         'master': 2,
         'phd': 5
     }
@@ -185,11 +186,13 @@ def extract_education(text: str) -> Optional[str]:
     
     text_lower = text.lower()
     
+    # Hierarchy: cao xuống thấp
     education_levels = [
-        ('phd', r'\b(?:phd|ph\.d|doctorate|doctoral)\b'),
-        ('master', r'\b(?:master|masters|mba|m\.s|ms|m\.a|ma|graduate degree)\b'),
-        ('bachelor', r'\b(?:bachelor|bachelors|b\.s|bs|b\.a|ba|undergraduate degree|university degree|college degree)\b'),
-        ('undergraduate', r'\b(?:undergraduate|undergrad)\b'),
+        ('phd', r'\b(?:phd|ph\.?d\.?|doctorate|doctoral|doctor of philosophy)\b'),
+        ('master', r'\b(?:master|masters|mba|m\.s\.?|ms|m\.a\.?|ma|graduate degree|post graduate|postgraduate|advanced degree)\b'),
+        ('bachelor', r'\b(?:bachelor|bachelors|b\.s\.?|bs|b\.a\.?|ba|bsc|4[- ]?year degree|university degree|college degree|degree from (?:an? )?(?:accredited )?(?:college|university))\b'),
+        ('associate', r'\b(?:associate(?:s)? degree|a\.s\.?|a\.a\.?|aa|as|2[- ]?year degree)\b'),
+        ('undergraduate', r'\b(?:undergraduate|undergrad|some college)\b'),
         ('high school', r'\b(?:high school|secondary school|diploma|ged)\b'),
     ]
     
@@ -262,11 +265,11 @@ def infer_seniority_from_attributes(min_experience: Optional[int], education: Op
     if education:
         edu_lower = education.lower()
         if edu_lower == 'phd':
-            return 'senior'  # PhDs typically enter at senior level
+            return 'senior' 
         elif edu_lower == 'master':
-            return 'mid'  # Masters typically mid-level
-        elif edu_lower in ['bachelor', 'undergraduate']:
-            return 'junior'  # Fresh grads
+            return 'mid' 
+        elif edu_lower in ['bachelor', 'associate', 'undergraduate']:
+            return 'junior'  
         elif edu_lower == 'high school':
             return 'junior'
     

@@ -64,10 +64,11 @@ def compute_education_score(job_edu: str, cv_edu: str) -> float:
     
     edu_levels = {
         'high school': 0,
-        'undergraduate': 1,
-        'bachelor': 2,
-        'master': 3,
-        'phd': 4
+        'associate': 1,
+        'undergraduate': 2,
+        'bachelor': 3,
+        'master': 4,
+        'phd': 5
     }
     
     job_level = edu_levels.get(job_edu.lower(), 0)
