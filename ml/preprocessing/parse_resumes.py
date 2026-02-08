@@ -392,7 +392,7 @@ def main():
 
     output_df = pd.DataFrame(all_parsed_cvs)
     
-    print(f"\n✓ Parsing complete! Parsed {len(output_df)} resumes.")
+    print(f"\nParsing complete! Parsed {len(output_df)} resumes.")
     print("\nSummary statistics:")
     print(f"- CVs with email: {output_df['email'].notna().sum()}")
     print(f"- CVs with phone: {output_df['phone'].notna().sum()}")
@@ -409,9 +409,9 @@ def main():
     output_path = '../dataset/processed/cv_features_parsed.csv'
     try:
         output_df.to_csv(output_path, index=False)
-        print(f"\n✓ Saved to: {output_path}")
+        print(f"\nSaved to: {output_path}")
     except PermissionError:
-        print(f"\n✗ Error: Cannot write to {output_path}")
+        print(f"\nError: Cannot write to {output_path}")
         print("   The file is currently open in another program (Excel, text editor, etc.)")
         print("   Please close the file and run the script again.")
         return

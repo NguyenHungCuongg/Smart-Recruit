@@ -217,9 +217,9 @@ def main():
     output_path = '../dataset/processed/training_data.csv'
     try:
         training_df.to_csv(output_path, index=False)
-        print(f"\n✓ Saved training data to: {output_path}")
+        print(f"\nSaved training data to: {output_path}")
     except PermissionError:
-        print(f"\n✗ Error: Cannot write to {output_path}")
+        print(f"\nError: Cannot write to {output_path}")
         print("   The file is currently open in another program (Excel, text editor, etc.)")
         print("   Please close the file and run the script again.")
         return
