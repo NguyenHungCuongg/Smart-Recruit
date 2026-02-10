@@ -17,3 +17,12 @@ class HealthCheckResponse(BaseModel):
     model_loaded: bool
     model_version: str
     uptime_seconds: float
+
+class ModelInfoResponse(BaseModel):
+    model_name: str
+    model_type: str
+    training_date: str
+    features: List[str]
+    n_features: int
+    test_metrics: dict
+    version: str
