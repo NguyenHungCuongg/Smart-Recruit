@@ -1,12 +1,8 @@
-# =========================
 # Agent
-# =========================
 .github/copilot-instructions.md
 .cursor/rules/project-context.mdc
 
-# =========================
 # Global
-# =========================
 .env
 .env.*
 *.log
@@ -14,9 +10,7 @@ logs/
 tmp/
 temp/
 
-# =========================
 # OS / Editor
-# =========================
 .DS_Store
 Thumbs.db
 .idea/
@@ -27,16 +21,25 @@ Thumbs.db
 *.ipr
 *.iws
 
-# =========================
 # Docker
-# =========================
 postgres_data/
 
-# =========================
 # Backend (Spring Boot)
-# =========================
 backend/target/
 backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd
 uploads/
+
+
+# ML Service
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+ml/ml_service/__pycache__/config.cpython-313.pyc
+ml/ml_service/__pycache__/main.cpython-313.pyc
+ml/ml_service/api/__pycache__/__init__.cpython-313.pyc
