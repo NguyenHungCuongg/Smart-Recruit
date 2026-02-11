@@ -43,3 +43,6 @@ __pycache__/
 ml/ml_service/__pycache__/config.cpython-313.pyc
 ml/ml_service/__pycache__/main.cpython-313.pyc
 ml/ml_service/api/__pycache__/__init__.cpython-313.pyc
+
+# Test folders
+**/test/
