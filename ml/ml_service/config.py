@@ -22,7 +22,6 @@ class Settings(BaseSettings):
   PORT: int = int(os.getenv("PORT", "8000"))
   RELOAD: bool = os.getenv("RELOAD", "false").lower() == "true"
 
-
   # CORS
   ALLOWED_ORIGINS: list = ["http://localhost:5173", "http://localhost:8080"]
 

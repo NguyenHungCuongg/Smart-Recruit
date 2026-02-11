@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import logging
 
 from ml_service.config import settings
-from ml_service.api import health
+from ml_service.api import health, prediction
 from ml_service.models.model_loader import ModelLoader
 
 # Setup logging
@@ -57,6 +57,7 @@ app.add_middleware(
 
 # Thêm các router
 app.include_router(health.router, prefix=settings.API_PREFIX, tags=["Health"])
+app.include_router(prediction.router, prefix=settings.API_PREFIX, tags=["Prediction"])
 
 @app.get("/")
 async def root():
