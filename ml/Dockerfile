@@ -44,7 +44,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
-# Environment variables (can be overridden at runtime)
+# Environment variables 
 ENV MODEL_PATH=/app/models/baseline_model_xgboost.joblib
 ENV METADATA_PATH=/app/models/baseline_model_metadata.json
 ENV HOST=0.0.0.0
