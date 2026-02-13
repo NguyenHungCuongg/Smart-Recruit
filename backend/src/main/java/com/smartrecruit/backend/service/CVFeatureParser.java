@@ -9,10 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * Parser for extracting features from CV text.
- * Supports multi-industry skill parsing, not limited to IT.
- */
 @Service
 public class CVFeatureParser {
 
