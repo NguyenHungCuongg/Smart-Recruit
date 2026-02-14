@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+//Mỗi Evaluation Entity chỉ cho một cặp CV và JD thôi.
+//Ta sẽ sử dụng EvaluationHistory Entity để lưu nhiều cặp CV và JD trong 1 lần evaluate
 @Entity
 @Table(
     name = "evaluations",
@@ -59,4 +61,9 @@ public class Evaluation {
     @JoinColumn(name = "evaluated_by")
     @JsonIgnore
     private User evaluatedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "evaluation_history_id")
+    @JsonIgnore
+    private EvaluationHistory evaluationHistory;
 }
