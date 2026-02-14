@@ -35,8 +35,7 @@ public class MLServiceClient {
     public PredictionResponse predict(PredictionRequest request) {
         String url = mlServiceUrl + "/predict";
         
-        log.info("Sending prediction request to ML Service: {} features", 
-                 request.getFeatures().size());
+        log.info("Sending prediction request to ML Service");
         
         long startTime = System.currentTimeMillis();
         
@@ -55,9 +54,9 @@ public class MLServiceClient {
             );
             
             long duration = System.currentTimeMillis() - startTime;
-            log.info("ML prediction successful. Duration: {}ms, Results: {}", 
+            log.info("ML prediction successful. Duration: {}ms, Score: {}", 
                      duration, 
-                     response.getBody() != null ? response.getBody().getCount() : 0);
+                     response.getBody() != null ? response.getBody().getScore() : "N/A");
             
             return response.getBody();
             
@@ -65,7 +64,7 @@ public class MLServiceClient {
             // Các lỗi 4xx (lỗi Client)
             log.error("ML Service client error ({}): {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new MLServiceException(
-                "Invalid request to ML Service: " + e.getMessage(),
+                "Invalid request to ML Service",
                 "ML_CLIENT_ERROR",
                 e
             );
@@ -74,7 +73,7 @@ public class MLServiceClient {
             // Các lỗi 5xx (lỗi Server)
             log.error("ML Service server error ({}): {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new MLServiceException(
-                "ML Service internal error: " + e.getMessage(),
+                "ML Service internal error",
                 "ML_SERVER_ERROR",
                 e
             );

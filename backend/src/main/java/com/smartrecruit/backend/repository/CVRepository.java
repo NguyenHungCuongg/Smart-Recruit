@@ -41,4 +41,14 @@ public interface CVRepository extends JpaRepository<CV, UUID> {
     @Query("SELECT c FROM CV c WHERE c.uploadedAt = " +
            "(SELECT MAX(c2.uploadedAt) FROM CV c2 WHERE c2.candidate.id = c.candidate.id)")
     List<CV> findLatestCVForEachCandidate();
+
+    //Tìm các CV theo danh sách các Candidate
+    @Query("SELECT c FROM CV c LEFT JOIN FETCH c.candidate WHERE c.candidate.id IN :candidateIds")
+    List<CV> findByCandidateIdInWithCandidate(@Param("candidateIds") List<UUID> candidateIds);
+
+    //Tìm CV gần nhất với mỗi Candidate trong danh sách các Candidate
+    @Query("SELECT c FROM CV c LEFT JOIN FETCH c.candidate " +
+           "WHERE c.candidate.id IN :candidateIds " +
+           "AND c.uploadedAt = (SELECT MAX(c2.uploadedAt) FROM CV c2 WHERE c2.candidate.id = c.candidate.id)")
+    List<CV> findLatestCVForCandidates(@Param("candidateIds") List<UUID> candidateIds);
 }

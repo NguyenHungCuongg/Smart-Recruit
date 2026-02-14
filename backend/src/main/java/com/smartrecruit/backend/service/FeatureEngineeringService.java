@@ -159,11 +159,9 @@ public class FeatureEngineeringService {
         
         int jobLevel = mapEducationLevel(jobEducation);
         int cvLevel = mapEducationLevel(cvEducation);
-        
-        // Gap: absolute difference
+
         int gap = Math.abs(cvLevel - jobLevel);
-        
-        // Match: 1 if cv_level >= job_level, else 0
+
         int match = cvLevel >= jobLevel ? 1 : 0;
         
         features.put("gap", gap);
@@ -190,7 +188,7 @@ public class FeatureEngineeringService {
         } else if (normalized.contains("associate") || normalized.contains("diploma")) {
             return 2;
         } else {
-            return 1; // High school or unknown
+            return 1;
         }
     }
 

@@ -49,4 +49,14 @@ public class SecurityUtils {
         User currentUser = getCurrentUser();
         return currentUser != null && "ADMIN".equals(currentUser.getRole());
     }
+
+    // Kiểm tra nếu người dùng hiện tại là chủ sở hữu của một "tài nguyên" nào đó (ví dụ: JobDescription, EvaluationHistory, v.v.)
+    public boolean isCurrentUserOwner(UUID ownerId) {
+        UUID currentUserId = getCurrentUserId();
+        return currentUserId != null && currentUserId.equals(ownerId);
+    }
+
+    public boolean canCurrentUserAccess(UUID ownerId) {
+        return isCurrentUserAdmin() || isCurrentUserOwner(ownerId);
+    }
 }

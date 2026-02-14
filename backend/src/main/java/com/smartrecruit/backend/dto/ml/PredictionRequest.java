@@ -5,13 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class PredictionRequest {
-    private List<FeatureVector> features;
+
+    private FeatureVector features;
+
+    public PredictionRequest(FeatureVector features) {
+        this.features = features;
+    }
 }
 
