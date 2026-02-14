@@ -96,19 +96,10 @@ public class CVFeatureParser {
             IndustryType.HEALTHCARE, List.of(HEALTHCARE_SKILLS)
     );
 
-    /**
-     * Parse CV text and extract features.
-     * Uses generic skill parsing (all industries combined).
-     */
     public CVFeatures parse(String rawText) {
         return parse(rawText, null);
     }
 
-    /**
-     * Parse CV text and extract features for a specific industry.
-     * @param rawText The raw CV text
-     * @param targetIndustry Optional industry hint for focused skill parsing
-     */
     public CVFeatures parse(String rawText, IndustryType targetIndustry) {
         if (rawText == null || rawText.isBlank()) {
             return emptyFeatures();
