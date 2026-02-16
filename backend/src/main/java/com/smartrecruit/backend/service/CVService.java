@@ -149,7 +149,7 @@ public class CVService {
         } catch (IOException e) {
             log.warn("Failed to delete CV file: {}", fullPath, e);
         }
-        
+            
         cv.getCandidate().removeCV(cv);
         cvRepository.delete(cv);
     }
