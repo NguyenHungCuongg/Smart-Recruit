@@ -32,9 +32,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/error").permitAll()  
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/jobs/**").hasAnyRole("RECRUITER", "ADMIN")
                         .requestMatchers("/api/candidates/**").hasAnyRole("RECRUITER", "ADMIN")
+                        .requestMatchers("/api/evaluations/**").hasAnyRole("RECRUITER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

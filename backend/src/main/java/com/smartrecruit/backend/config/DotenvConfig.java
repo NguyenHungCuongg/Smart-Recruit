@@ -10,10 +10,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Load .env file BEFORE Spring Boot initializes datasource
- * This runs during application startup, before any beans are created
- */
 public class DotenvConfig implements ApplicationContextInitializer<ConfigurableApplicationContext> {
     
     @Override

@@ -10,12 +10,14 @@ import com.smartrecruit.backend.enums.RoleType;
 import com.smartrecruit.backend.repository.CandidateRepository;
 import com.smartrecruit.backend.repository.CVRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.exception.TikaException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CVService {
 
     private final CVRepository cvRepository;
@@ -36,6 +39,21 @@ public class CVService {
 
     @Value("${app.upload.cv-dir:./uploads/cvs}")
     private String uploadDir;
+    
+    private Path uploadPath;
+    
+    @PostConstruct
+    public void init() {
+        // Sử dụng Path để đảm bảo đường dẫn được chuẩn hóa và có thể tạo thư mục nếu chưa tồn tại
+        uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(uploadPath);
+            log.info("CV upload directory initialized at: {}", uploadPath);
+        } catch (IOException e) {
+            log.error("Failed to create upload directory: {}", uploadPath, e);
+            throw new RuntimeException("Cannot initialize CV upload directory", e);
+        }
+    }
 
     @Transactional
     public CVResponse upload(UUID candidateId, MultipartFile file, User currentUser) {
@@ -54,23 +72,36 @@ public class CVService {
         }
         String ext = getExtension(originalFilename);
         String storedFileName = UUID.randomUUID() + ext;
-        Path candidateDir = Paths.get(uploadDir, candidateId.toString());
+        
+        // Sử dụng uploadPath để tạo đường dẫn đầy đủ đến file sẽ lưu
+        Path candidateDir = uploadPath.resolve(candidateId.toString());
         Path targetFile = candidateDir.resolve(storedFileName);
 
         String relativePath = candidateId + "/" + storedFileName;
+        
+        log.debug("Uploading CV for candidate {}: {} -> {}", candidateId, originalFilename, targetFile);
+        
         String extractedText;
         try (InputStream is = file.getInputStream()) {
             extractedText = textExtractor.extractTextNormalized(is);
         } catch (IOException | TikaException e) {
+            log.warn("Failed to extract text from CV: {}", originalFilename, e);
             extractedText = "";
         }
         CVFeatures features = featureParser.parse(extractedText);
 
         try {
+            // Tạo thư mục cho candidate nếu chưa tồn tại
             Files.createDirectories(candidateDir);
+            log.debug("Created directory: {}", candidateDir);
+            
+            // Lưu file vào hệ thống
             file.transferTo(targetFile.toFile());
+            log.info("CV uploaded successfully: {}", targetFile);
+            
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save file: " + e.getMessage());
+            log.error("Failed to save CV file to: {}", targetFile, e);
+            throw new RuntimeException("Failed to save file: " + targetFile.toString(), e);
         }
 
         CV cv = CV.builder()
@@ -107,13 +138,18 @@ public class CVService {
         ensureRecruiterOrAdmin(currentUser);
         CV cv = cvRepository.findByIdWithCandidate(cvId)
                 .orElseThrow(() -> new IllegalArgumentException("CV not found: " + cvId));
-        Path fullPath = Paths.get(uploadDir, cv.getFilePath());
+        
+        Path fullPath = uploadPath.resolve(cv.getFilePath());
+        
         try {
             if (Files.exists(fullPath)) {
                 Files.delete(fullPath);
+                log.info("Deleted CV file: {}", fullPath);
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            log.warn("Failed to delete CV file: {}", fullPath, e);
         }
+        
         cv.getCandidate().removeCV(cv);
         cvRepository.delete(cv);
     }

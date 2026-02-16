@@ -6,6 +6,7 @@ import com.smartrecruit.backend.dto.evaluation.EvaluationResponse;
 import com.smartrecruit.backend.dto.ml.FeatureVector;
 import com.smartrecruit.backend.dto.ml.PredictionRequest;
 import com.smartrecruit.backend.dto.ml.PredictionResponse;
+import com.smartrecruit.backend.dto.ml.PredictionResult;
 import com.smartrecruit.backend.entity.*;
 import com.smartrecruit.backend.repository.*;
 import com.smartrecruit.backend.security.SecurityUtils;
@@ -173,17 +174,23 @@ public class EvaluationService {
         // Extract features
         FeatureVector features = featureEngineeringService.extractFeatures(job, cv);
 
-        // Gọi ML service
-        PredictionRequest predictionRequest = new PredictionRequest(features);
+        // Gọi ML service (Gộp vào batch sau này nếu cần)
+        PredictionRequest predictionRequest = new PredictionRequest(features); // Constructor này sẽ tự động gói features vào một list
         PredictionResponse prediction = mlServiceClient.predict(predictionRequest);
+
+        // Lấy kết quả đầu tiên từ batch response
+        PredictionResult result = prediction.getFirstPrediction();
+        if (result == null) {
+            throw new RuntimeException("ML Service returned empty predictions");
+        }
 
         // Tạo Evaluation entity từ kết quả dự đoán
         Evaluation evaluation = Evaluation.builder()
                 .job(job)
                 .cv(cv)
-                .score(BigDecimal.valueOf(prediction.getScore()))
-                .confidence(prediction.getConfidence() != null ? 
-                           BigDecimal.valueOf(prediction.getConfidence()) : null)
+                .score(BigDecimal.valueOf(result.getScore()))
+                .confidence(result.getConfidence() != null ? 
+                           BigDecimal.valueOf(result.getConfidence()) : null)
                 .modelVersion(prediction.getModelVersion())
                 .evaluatedBy(evaluatedBy)
                 .evaluationHistory(evaluationHistory)

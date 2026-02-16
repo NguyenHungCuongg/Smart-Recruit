@@ -35,11 +35,13 @@ public class MLServiceClient {
     public PredictionResponse predict(PredictionRequest request) {
         String url = mlServiceUrl + "/predict";
         
-        log.info("Sending prediction request to ML Service");
+        log.info("Sending prediction request to ML Service: {} features", 
+                 request.getFeatures() != null ? request.getFeatures().size() : 0);
         
         long startTime = System.currentTimeMillis();
         
         try {
+            // Chuẩn bị headers và body cho request
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             
@@ -54,11 +56,13 @@ public class MLServiceClient {
             );
             
             long duration = System.currentTimeMillis() - startTime;
-            log.info("ML prediction successful. Duration: {}ms, Score: {}", 
+            PredictionResponse body = response.getBody();
+            log.info("ML prediction successful. Duration: {}ms, Predictions: {}, Model: {}", 
                      duration, 
-                     response.getBody() != null ? response.getBody().getScore() : "N/A");
+                     body != null ? body.getCount() : 0,
+                     body != null ? body.getModelVersion() : "N/A");
             
-            return response.getBody();
+            return body;
             
         } catch (HttpClientErrorException e) {
             // Các lỗi 4xx (lỗi Client)

@@ -56,7 +56,6 @@ public class CandidateController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- CV endpoints (nested under candidate) ---
 
     @PostMapping(value = "/{candidateId}/cvs", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CVResponse> uploadCV(
