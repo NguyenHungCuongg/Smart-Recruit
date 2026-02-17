@@ -9,7 +9,7 @@ export const Footer = () => {
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <Logo />
+              <Logo size="sm" />
               <span className="text-xl font-bold text-foreground">Smart Recruit</span>
             </div>
             <p className="text-muted-foreground max-w-md">

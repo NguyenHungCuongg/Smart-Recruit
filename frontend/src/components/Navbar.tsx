@@ -11,7 +11,7 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <Logo />
+            <Logo size="sm" />
             <span className="text-xl font-bold text-foreground">Smart Recruit</span>
           </Link>
 
