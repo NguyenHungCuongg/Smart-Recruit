@@ -7,7 +7,7 @@ export const Landing = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-background via-secondary to-accent/20 pt-20 pb-32">
+      <section className="relative overflow-hidden bg-gradient-to-br from-background via-secondary to-accent/20 pt-10 pb-22">
         {/* Decorative Blur Elements */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/30 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/30 rounded-full blur-[120px] animate-pulse delay-1000"></div>

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useDarkMode } from "../hooks/useDarkMode";
+import { Logo } from "../components/Logo";
 
 export const Navbar = () => {
   const { isDark, toggleDark } = useDarkMode();
@@ -10,9 +11,7 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">SR</span>
-            </div>
+            <Logo />
             <span className="text-xl font-bold text-foreground">Smart Recruit</span>
           </Link>
 
