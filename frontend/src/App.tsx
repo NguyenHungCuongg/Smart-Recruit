@@ -5,10 +5,12 @@ import { Landing } from "./pages/Landing";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import { Login } from "./pages/Login";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Toaster toastOptions={{ style: { fontFamily: "var(--font-sans)", color: "var(--sidebar-ring)" } }} />
       <Navbar />
       <Routes>
         <Route path="/" element={<Landing />} />
