@@ -20,9 +20,7 @@ export const LandingFeatureCard = ({
       <div
         className={`w-14 h-14 bg-gradient-to-br ${colorVariants[color]} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
       >
-        <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          {icon}
-        </svg>
+        {icon}
       </div>
       <h3 className="text-2xl font-bold text-foreground mb-3">{title}</h3>
       <p className="text-muted-foreground leading-relaxed">{description}</p>
