@@ -9,7 +9,7 @@ export const Contact = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.BaseSyntheticEvent) => {
     e.preventDefault();
     // Hiện tại thì chưa thiết lập chức năng này, chỉ UI.
     alert("Form submission is for demo purposes only. No data is sent.");
@@ -41,8 +41,8 @@ export const Contact = () => {
       </section>
 
       {/* Contact Form Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
+      <section className="py-40">
+        <div className="container mx-auto px-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Contact Info */}
             <div className="space-y-8">

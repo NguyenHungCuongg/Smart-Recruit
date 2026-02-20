@@ -34,7 +34,7 @@ export const Navbar = () => {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleDark}
-              className="p-2 rounded-lg bg-secondary hover:bg-accent transition-colors"
+              className="p-2 rounded-lg bg-secondary hover:bg-primary transition-colors"
               aria-label="Toggle dark mode"
             >
               {isDark ? (
