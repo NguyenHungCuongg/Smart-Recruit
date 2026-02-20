@@ -1,17 +1,31 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import toast from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
 
 export const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.BaseSyntheticEvent) => {
     e.preventDefault();
-    toast.success("Login Test");
+    setIsLoading(true);
+    try {
+      await login(formData.email, formData.password);
+      toast.success("Login successful!");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error("Login failed. Please check your credentials.");
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,9 +102,10 @@ export const Login = () => {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
