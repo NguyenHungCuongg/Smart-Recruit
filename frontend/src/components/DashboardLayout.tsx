@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDarkMode } from "../hooks/useDarkMode";
@@ -25,7 +25,14 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { isDark, toggleDark } = useDarkMode();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    const stored = localStorage.getItem("sidebarOpen");
+    return stored === null ? true : stored === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("sidebarOpen", isSidebarOpen.toString());
+  }, [isSidebarOpen]);
 
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: <FaChartPie className="w-5 h-5" /> },
