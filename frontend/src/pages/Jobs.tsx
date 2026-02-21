@@ -177,14 +177,14 @@ export const Jobs = () => {
                           className="p-2 hover:bg-secondary rounded-lg transition-colors"
                           title="View Details"
                         >
-                          <FaRegEye className="w-4 h-4 text-muted-foreground" />
+                          <FaRegEye className="w-4 h-4 text-chart-1" />
                         </Link>
                         <Link
                           to={`/jobs/${job.id}/edit`}
                           className="p-2 hover:bg-secondary rounded-lg transition-colors"
                           title="Edit"
                         >
-                          <FaRegPenToSquare className="w-4 h-4 text-muted-foreground" />
+                          <FaRegPenToSquare className="w-4 h-4 text-primary" />
                         </Link>
                       </div>
                     </td>

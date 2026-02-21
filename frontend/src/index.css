@@ -16,6 +16,7 @@
   --accent: #4f278f;
   --accent-foreground: #171717;
   --destructive: #d30046;
+  --active: #25f31a;
   --destructive-foreground: #fff6f8;
   --border: #e5e5e5;
   --input: #e5e5e5;
@@ -59,6 +60,12 @@
   --score-good: #5f8fff;
   --score-average: #ffe75f;
   --score-poor: #f44336;
+
+  /*Status colors */
+  --status-active: #25f31a;
+  --status-open: #3a81f6;
+  --status-closed: #737373;
+  --status-inactive: #949494;
 }
 
 .dark {
@@ -130,6 +137,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-active: var(--active);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -171,4 +179,10 @@
   --color-score-good: var(--score-good);
   --color-score-average: var(--score-average);
   --color-score-poor: var(--score-poor);
+
+  /*Status colors */
+  --color-status-active: var(--status-active);
+  --color-status-open: var(--status-open);
+  --color-status-closed: var(--status-closed);
+  --color-status-inactive: var(--status-inactive);
 }

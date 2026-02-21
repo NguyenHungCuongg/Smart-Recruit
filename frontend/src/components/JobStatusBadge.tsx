@@ -6,9 +6,9 @@ export const JobStatusBadge = ({ status }: JobStatusBadgeProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "OPEN":
-        return "bg-chart-1/10 text-chart-1 border-chart-1/20";
+        return "bg-status-open/10 text-status-open border-status-open/20";
       case "ACTIVE":
-        return "bg-primary/10 text-primary border-primary/20";
+        return "bg-status-active/10 text-status-active border-status-active/20";
       case "CLOSED":
         return "bg-muted text-muted-foreground border-border";
       default:
