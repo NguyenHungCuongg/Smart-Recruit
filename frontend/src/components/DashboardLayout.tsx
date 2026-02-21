@@ -12,9 +12,8 @@ import {
   FaUser,
   FaArrowRightFromBracket,
   FaBars,
-  FaRegSun,
-  FaRegMoon,
 } from "react-icons/fa6";
+import { GrSun, GrMoon } from "react-icons/gr";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -56,12 +55,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background">
       {/* Sidebar */}
       <aside
         className={`${
           isSidebarOpen ? "w-64" : "w-20"
-        } bg-card border-r border-border transition-all duration-300 flex flex-col`}
+        } fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 flex flex-col overflow-y-auto`}
       >
         {/* Logo */}
         <div className="p-6 border-b border-border flex items-center justify-between">
@@ -122,7 +121,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         {/* User Profile */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center space-x-3 px-4 py-3 bg-secondary rounded-lg">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 bg-linear-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-bold">
               {user?.fullName.charAt(0).toUpperCase()}
             </div>
             {isSidebarOpen && (
@@ -141,12 +140,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               >
                 {isDark ? (
                   <>
-                    <FaRegSun className="w-4 h-4" />
+                    <GrSun className="w-4 h-4" />
                     <span>Light Mode</span>
                   </>
                 ) : (
                   <>
-                    <FaRegMoon className="w-4 h-4" />
+                    <GrMoon className="w-4 h-4" />
                     <span>Dark Mode</span>
                   </>
                 )}
@@ -160,37 +159,32 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </button>
             </>
           ) : (
-            <button
-              onClick={toggleDark}
-              className="w-full mt-2 p-3 text-foreground hover:bg-secondary rounded-lg transition-colors flex items-center justify-center"
-              aria-label="Toggle dark mode"
-            >
-              {isDark ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
-              )}
-            </button>
+            <>
+              <button
+                onClick={toggleDark}
+                className="w-full mt-2 p-3 text-foreground hover:bg-secondary rounded-lg transition-colors flex items-center justify-center"
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? (
+                  <GrSun className="w-5 h-5 text-foreground" />
+                ) : (
+                  <GrMoon className="w-5 h-5 text-foreground" />
+                )}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full mt-2 p-3 text-destructive hover:bg-destructive/10 rounded-lg transition-colors flex items-center justify-center"
+                aria-label="Logout"
+              >
+                <FaArrowRightFromBracket className="w-5 h-5" />
+              </button>
+            </>
           )}
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className={`${isSidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300 min-h-screen`}>
         <div className="container mx-auto p-8">{children}</div>
       </main>
     </div>

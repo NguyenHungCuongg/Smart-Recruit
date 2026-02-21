@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FaRegMoon, FaRegSun } from "react-icons/fa6";
+import { GrSun, GrMoon } from "react-icons/gr";
 import { useDarkMode } from "../hooks/useDarkMode";
 import { Logo } from "./Logo";
 
@@ -37,11 +37,7 @@ export const Navbar = () => {
               className="p-2 rounded-lg bg-secondary hover:bg-primary transition-colors"
               aria-label="Toggle dark mode"
             >
-              {isDark ? (
-                <FaRegSun className="w-5 h-5 text-foreground" />
-              ) : (
-                <FaRegMoon className="w-5 h-5 text-foreground" />
-              )}
+              {isDark ? <GrSun className="w-5 h-5 text-foreground" /> : <GrMoon className="w-5 h-5 text-foreground" />}
             </button>
 
             {/* Get Started Button */}
