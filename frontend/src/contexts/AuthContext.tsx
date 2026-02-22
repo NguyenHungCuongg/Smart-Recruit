@@ -1,13 +1,14 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { AuthContext } from "./auth-context";
 import { type User } from "../types/auth";
+import { authService } from "../services/authService";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Kiểm tra localStorage xem người dùng đã đăng nhập chưa
+    // Kiểm tra localStorage xem đã có các session tồn tại trước đó chưa
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
 
@@ -19,21 +20,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    // Mô phỏng API call với delay (sau này sẽ thay bằng API thực tế sau)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const mockUser: User = {
-      id: 1,
-      email,
-      fullName: email === "admin@smartrecruit.com" ? "Admin User" : "Recruiter User",
-      role: email === "admin@smartrecruit.com" ? "ADMIN" : "RECRUITER",
-    };
+    try {
+      const response = await authService.login({ email, password });
 
-    const mockToken = "mock-jwt-token-" + Date.now();
+      const user: User = {
+        id: response.userId,
+        email: response.email,
+        fullName: response.fullName,
+        role: response.role,
+      };
 
-    setUser(mockUser);
-    localStorage.setItem("user", JSON.stringify(mockUser));
-    localStorage.setItem("token", mockToken);
-    setIsLoading(false);
+      setUser(user);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", response.token);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {

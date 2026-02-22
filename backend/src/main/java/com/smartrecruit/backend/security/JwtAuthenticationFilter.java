@@ -25,6 +25,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getRequestURI();
+        // Bỏ qua JWT filter cho các public endpoints
+        return path.startsWith("/api/auth/");
+    }
+
+    @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
@@ -34,12 +41,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
+        // Bỏ qua xử lý JWT cho các endpoint công khai
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response); //Nếu Header không có Authorization: để chuyển request cho bộ lọc tiếp theo (không xử lý gì thêm).
+            filterChain.doFilter(request, response); //Nếu Header không có Authorization hoặc không bắt đầu bằng "Bearer ", bỏ qua filter này
             return;
         }
 
         jwt = authHeader.substring(7); // Lấy phần String sau chữ "Bearer "
+        
+        // Nếu token sau "Bearer " là rỗng, bỏ qua filter này
+        if (jwt.isEmpty()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         userEmail = jwtService.extractUsername(jwt);
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {

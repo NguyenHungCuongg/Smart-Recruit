@@ -20,8 +20,9 @@ export const Login = () => {
       await login(formData.email, formData.password);
       toast.success("Login successful!");
       navigate("/dashboard");
-    } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
+      toast.error(errorMessage);
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -36,7 +37,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary to-accent/20 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-linear-to-br from-background via-secondary to-accent/20 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

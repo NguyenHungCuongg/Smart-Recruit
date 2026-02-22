@@ -1,19 +1,57 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import toast from "react-hot-toast";
+import { useAuth } from "../hooks/useAuth";
+import { authService } from "../services/authService";
 
 export const Register = () => {
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.BaseSyntheticEvent) => {
+  const handleSubmit = async (e: React.BaseSyntheticEvent) => {
     e.preventDefault();
-    toast.success("Register Test");
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters!");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Register user
+      await authService.register({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+      });
+
+      toast.success("Registration successful!");
+
+      // Auto login after registration
+      await login(formData.email, formData.password);
+      navigate("/dashboard");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
+      toast.error(errorMessage);
+      console.error("Registration error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,7 +62,7 @@ export const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary to-accent/20 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-linear-to-br from-background via-secondary to-accent/20 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -41,14 +79,14 @@ export const Register = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="fullName" className="block text-sm font-medium text-foreground mb-2">
                 Full Name
               </label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={formData.name || ""}
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
@@ -99,7 +137,7 @@ export const Register = () => {
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
-                value={formData.confirmPassword || ""}
+                value={formData.confirmPassword}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
@@ -110,9 +148,10 @@ export const Register = () => {
             {/* Register Button */}
             <button
               type="submit"
-              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign Up
+              {isLoading ? "Creating account..." : "Sign Up"}
             </button>
           </form>
 
