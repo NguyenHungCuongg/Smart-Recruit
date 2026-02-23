@@ -19,6 +19,8 @@ import { Evaluations } from "./pages/Evaluations";
 import { EvaluationDetail } from "./pages/EvaluationDetail";
 import { AdminUsers } from "./pages/AdminUsers";
 import { AdminAnalytics } from "./pages/AdminAnalytics";
+import { JobNew } from "./pages/JobNew";
+import { CandidateNew } from "./pages/CandidateNew";
 import { useDarkMode } from "./hooks/useDarkMode";
 
 function App() {
@@ -72,10 +74,12 @@ function App() {
 
             {/* Jobs Routes */}
             <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/new" element={<JobNew />} />
             <Route path="/jobs/:id" element={<JobDetail />} />
 
             {/* Candidates Routes */}
             <Route path="/candidates" element={<Candidates />} />
+            <Route path="/candidates/new" element={<CandidateNew />} />
             <Route path="/candidates/:id" element={<CandidateDetail />} />
 
             {/* Evaluations Routes */}
