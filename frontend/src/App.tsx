@@ -19,8 +19,11 @@ import { Evaluations } from "./pages/Evaluations";
 import { EvaluationDetail } from "./pages/EvaluationDetail";
 import { AdminUsers } from "./pages/AdminUsers";
 import { AdminAnalytics } from "./pages/AdminAnalytics";
+import { useDarkMode } from "./hooks/useDarkMode";
 
 function App() {
+  useDarkMode();
+
   return (
     <AuthProvider>
       <div className="min-h-screen bg-background text-foreground">
