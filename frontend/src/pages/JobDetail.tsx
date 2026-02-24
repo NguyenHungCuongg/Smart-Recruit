@@ -184,7 +184,12 @@ export const JobDetail = () => {
             {activeTab === "info" && (
               <JobInfoTab
                 description={job.description || "No description provided"}
-                requirements={{ skills: [], experience: 0, education: "BACHELOR", seniority: "JUNIOR" }}
+                requirements={{
+                  skills: job.requirements?.skills || [],
+                  experience: job.requirements?.minExperience || 0,
+                  education: job.requirements?.education || "N/A",
+                  seniority: job.requirements?.seniority || "N/A",
+                }}
               />
             )}
 

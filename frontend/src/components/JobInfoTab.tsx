@@ -18,15 +18,19 @@ export const JobInfoTab = ({ description, requirements }: JobInfoTabProps) => {
 
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-3">Requirements</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-secondary/50 rounded-xl p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          <div className="bg-secondary/50 rounded-xl p-4 md:col-span-3">
             <p className="text-sm font-medium text-foreground mb-2">Skills Required</p>
             <div className="flex flex-wrap gap-2">
-              {requirements.skills.map((skill) => (
-                <span key={skill} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                  {skill}
-                </span>
-              ))}
+              {requirements.skills.length > 0 ? (
+                requirements.skills.map((skill) => (
+                  <span key={skill} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted-foreground text-sm">No specific skills listed</span>
+              )}
             </div>
           </div>
           <div className="bg-secondary/50 rounded-xl p-4">

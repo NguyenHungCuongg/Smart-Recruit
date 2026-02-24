@@ -1,5 +1,12 @@
 import apiClient from "./apiClient";
 
+export interface JobRequirements {
+  skills: string[];
+  minExperience: number | null;
+  education: string | null;
+  seniority: string | null;
+}
+
 export interface Job {
   id: string;
   title: string;
@@ -8,6 +15,7 @@ export interface Job {
   status: "OPEN" | "ACTIVE" | "CLOSED";
   jdFilePath: string;
   description?: string;
+  requirements?: JobRequirements;
   createdAt: string;
   updatedAt: string;
   recruiterId: string;
