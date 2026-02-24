@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 interface RecentEvaluationListItemProps {
-  id: number;
+  id: string | number;
   job: string;
   candidates: number;
   avgScore: number;

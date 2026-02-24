@@ -20,8 +20,6 @@ export const Evaluations = () => {
   const loadEvaluations = async () => {
     try {
       setLoading(true);
-      // Backend doesn't have GET /api/evaluations endpoint
-      // So we fetch all jobs and get latest evaluation for each
       const jobs = await jobService.getAll();
 
       const allEvaluations: Evaluation[] = [];
@@ -158,7 +156,7 @@ export const Evaluations = () => {
       </div>
 
       {/* Empty State */}
-      {evaluations.length === 0 && (
+      {!loading && evaluations.length === 0 && (
         <div className="bg-card border border-border rounded-2xl p-12 text-center">
           <div className="rounded-full flex items-center justify-center mx-auto mb-4">
             <img src={notFound} alt="No evaluations" className="w-64 h-64 text-primary" />

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { JobStatusBadge } from "./JobStatusBadge";
 
 interface RecentJobListItemProps {
-  id: number;
+  id: string | number;
   title: string;
   candidates: number;
   status: string;
