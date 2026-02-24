@@ -1,9 +1,11 @@
+import { FaFile } from "react-icons/fa6";
+
 interface CVSelectItemProps {
-  id: number;
+  id: string;
   fileName: string;
   uploadedAt: string;
   isSelected: boolean;
-  onSelect: (id: number) => void;
+  onSelect: (id: string) => void;
 }
 
 export const CVSelectItem = ({ id, fileName, uploadedAt, isSelected, onSelect }: CVSelectItemProps) => {
@@ -16,7 +18,9 @@ export const CVSelectItem = ({ id, fileName, uploadedAt, isSelected, onSelect }:
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-medium text-foreground text-sm">📄 {fileName}</p>
+          <p className="font-medium text-foreground text-sm">
+            <FaFile className="inline mr-2" /> {fileName}
+          </p>
           <p className="text-xs text-muted-foreground">Uploaded: {uploadedAt}</p>
         </div>
         {isSelected && (

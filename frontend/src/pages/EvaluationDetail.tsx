@@ -1,97 +1,58 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { EvaluationResultCard } from "../components/EvaluationResultCard";
+import evaluationService, { type Evaluation } from "../services/evaluationService";
+import { toast } from "react-hot-toast";
 
 export const EvaluationDetail = () => {
   const { id } = useParams();
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
+  const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const evaluation = {
-    id: parseInt(id || "1"),
-    jobId: 1,
-    jobTitle: "Senior Full Stack Developer",
-    date: "2024-02-13 14:30",
-    modelVersion: "v1.2.0",
-    totalCandidates: 15,
+  useEffect(() => {
+    if (id) {
+      loadEvaluation(id);
+    }
+  }, [id]);
+
+  const loadEvaluation = async (evaluationId: string) => {
+    try {
+      setLoading(true);
+      const data = await evaluationService.getById(evaluationId);
+      setEvaluation(data);
+    } catch (error) {
+      console.error("Error loading evaluation:", error);
+      toast.error("Failed to load evaluation details");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const results = [
-    {
-      candidateId: 1,
-      name: "Alice Johnson",
-      email: "alice.j@email.com",
-      score: 94,
-      confidence: 0.92,
-      rank: 1,
-      featureScores: {
-        skills: 95,
-        experience: 92,
-        education: 96,
-        relevance: 93,
-      },
-    },
-    {
-      candidateId: 2,
-      name: "John Doe",
-      email: "john.doe@email.com",
-      score: 72,
-      confidence: 0.89,
-      rank: 2,
-      featureScores: {
-        skills: 94,
-        experience: 90,
-        education: 58,
-        relevance: 95,
-      },
-    },
-    {
-      candidateId: 3,
-      name: "Sarah Miller",
-      email: "sarah.m@email.com",
-      score: 38,
-      confidence: 0.86,
-      rank: 3,
-      featureScores: {
-        skills: 90,
-        experience: 35,
-        education: 22,
-        relevance: 36,
-      },
-    },
-    {
-      candidateId: 4,
-      name: "Mike Wilson",
-      email: "mike.w@email.com",
-      score: 85,
-      confidence: 0.84,
-      rank: 4,
-      featureScores: {
-        skills: 88,
-        experience: 82,
-        education: 85,
-        relevance: 87,
-      },
-    },
-    {
-      candidateId: 5,
-      name: "Emma Brown",
-      email: "emma.b@email.com",
-      score: 82,
-      confidence: 0.81,
-      rank: 5,
-      featureScores: {
-        skills: 80,
-        experience: 84,
-        education: 82,
-        relevance: 83,
-      },
-    },
-  ];
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-  const sortedResults = [...results].sort((a, b) => {
+  if (!evaluation) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Evaluation not found</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const sortedResults = [...evaluation.candidates].sort((a, b) => {
     if (sortBy === "score") return b.score - a.score;
-    return a.name.localeCompare(b.name);
+    return a.candidateName.localeCompare(b.candidateName);
   });
 
   const getScoreColor = (score: number) => {
@@ -101,7 +62,12 @@ export const EvaluationDetail = () => {
     return "text-score-poor";
   };
 
-  const avgScore = results.reduce((sum, r) => sum + r.score, 0) / results.length;
+  const avgScore =
+    evaluation.candidates.length > 0
+      ? evaluation.candidates.reduce((sum, r) => sum + r.score, 0) / evaluation.candidates.length
+      : 0;
+
+  const topScore = evaluation.candidates.length > 0 ? evaluation.candidates[0].score : 0;
 
   return (
     <DashboardLayout>
@@ -128,14 +94,11 @@ export const EvaluationDetail = () => {
                 {evaluation.jobTitle}
               </Link>
               <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
-                <span>Evaluated on {evaluation.date}</span>
+                <span>Evaluated on {new Date(evaluation.evaluatedAt).toLocaleString()}</span>
                 <span>•</span>
                 <span>Model {evaluation.modelVersion}</span>
               </div>
             </div>
-            <button className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors font-medium">
-              Export Results
-            </button>
           </div>
         </div>
 
@@ -143,7 +106,7 @@ export const EvaluationDetail = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-card border border-border rounded-xl p-6">
             <p className="text-sm text-muted-foreground mb-1">Total Candidates</p>
-            <p className="text-3xl font-bold text-foreground">{evaluation.totalCandidates}</p>
+            <p className="text-3xl font-bold text-foreground">{evaluation.totalEvaluated}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-6">
             <p className="text-sm text-muted-foreground mb-1">Average Score</p>
@@ -151,11 +114,13 @@ export const EvaluationDetail = () => {
           </div>
           <div className="bg-card border border-border rounded-xl p-6">
             <p className="text-sm text-muted-foreground mb-1">Top Score</p>
-            <p className={`text-3xl font-bold ${getScoreColor(results[0].score)}`}>{results[0].score}</p>
+            <p className={`text-3xl font-bold ${getScoreColor(topScore)}`}>{topScore.toFixed(1)}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-6">
             <p className="text-sm text-muted-foreground mb-1">Qualified (≥85)</p>
-            <p className="text-3xl font-bold text-chart-1">{results.filter((r) => r.score >= 85).length}</p>
+            <p className="text-3xl font-bold text-chart-1">
+              {evaluation.candidates.filter((r) => r.score >= 85).length}
+            </p>
           </div>
         </div>
 

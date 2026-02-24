@@ -8,6 +8,8 @@ import com.smartrecruit.backend.dto.ml.PredictionRequest;
 import com.smartrecruit.backend.dto.ml.PredictionResponse;
 import com.smartrecruit.backend.dto.ml.PredictionResult;
 import com.smartrecruit.backend.entity.*;
+import com.smartrecruit.backend.enums.ApplicationStatus;
+import com.smartrecruit.backend.exception.MLServiceException;
 import com.smartrecruit.backend.repository.*;
 import com.smartrecruit.backend.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class EvaluationService {
     private final CandidateRepository candidateRepository;
     private final EvaluationRepository evaluationRepository;
     private final EvaluationHistoryRepository evaluationHistoryRepository;
+    private final JobApplicationRepository jobApplicationRepository;
     private final FeatureEngineeringService featureEngineeringService;
     private final MLServiceClient mlServiceClient;
     private final SecurityUtils securityUtils;
@@ -60,14 +63,20 @@ public class EvaluationService {
 
         log.info("Found {} CVs to evaluate", cvsToEvaluate.size());
 
-        // Tạo 1 record cho EvaluationHistory
+        // Tạo và persist EvaluationHistory TRƯỚC KHI evaluate để tránh Hibernate cascade error
         EvaluationHistory evaluationHistory = EvaluationHistory.builder()
                 .jobDescription(job)
                 .evaluatedBy(currentUser)
                 .evaluationTime(LocalDateTime.now())
                 .modelVersion("v1.0")
                 .totalCandidates(cvsToEvaluate.size())
+                .successCount(0)
+                .failureCount(0)
             .build();
+        
+        // Persist ngay để có ID và tránh TransientPropertyValueException
+        evaluationHistory = evaluationHistoryRepository.save(evaluationHistory);
+        log.debug("Created EvaluationHistory with ID: {}", evaluationHistory.getId());
 
         // Đánh giá từng CV
         List<Evaluation> evaluations = new ArrayList<>();
@@ -79,8 +88,17 @@ public class EvaluationService {
                 evaluations.add(evaluation);
                 successCount++;
                 log.debug("Successfully evaluated CV: {} with score: {}", cv.getId(), evaluation.getScore());
+                
+                // Cập nhật status của JobApplication thành EVALUATED
+                updateJobApplicationStatus(jobId, cv.getId(), ApplicationStatus.EVALUATED);
+            } catch (MLServiceException e) {
+                // ML Service errors are critical - fail the entire evaluation
+                log.error("ML Service error during evaluation: {}", e.getMessage());
+                log.error("Aborting evaluation for job: {}. Please ensure ML Service is running and try again.", jobId);
+                throw e; // Propagate to controller to show user-friendly error
             } catch (Exception e) {
-                log.error("Failed to evaluate CV: {}", cv.getId(), e);
+                // Business/parsing errors - log and create failed evaluation
+                log.error("Failed to evaluate CV: {} - {}", cv.getId(), e.getMessage(), e);
                 Evaluation failedEvaluation = createFailedEvaluation(job, cv, currentUser, evaluationHistory, e.getMessage());
                 evaluations.add(failedEvaluation);
                 failureCount++;
@@ -90,12 +108,10 @@ public class EvaluationService {
         // Rank theo điểm số từ cao xuống thấp
         evaluations.sort(Comparator.comparing(Evaluation::getScore).reversed());
 
-        // Cập nhật lại EvaluationHistory với kết quả
+        // Cập nhật lại EvaluationHistory với kết quả (chỉ update counters, KHÔNG set lại collection để tránh orphan removal issue)
         evaluationHistory.setSuccessCount(successCount);
         evaluationHistory.setFailureCount(failureCount);
-        evaluationHistory.setEvaluations(evaluations);
-        
-        evaluationHistoryRepository.save(evaluationHistory);
+        evaluationHistory = evaluationHistoryRepository.save(evaluationHistory);
 
         return buildEvaluationResponse(evaluationHistory, evaluations);
     }
@@ -143,13 +159,45 @@ public class EvaluationService {
         return buildEvaluationResponse(history, evaluations);
     }
 
+    // Lấy kết quả đánh giá theo evaluationId (EvaluationHistory ID)
+    @Transactional(readOnly = true)
+    public EvaluationResponse getEvaluationById(UUID evaluationId) {
+        EvaluationHistory history = evaluationHistoryRepository.findById(evaluationId)
+                .orElseThrow(() -> new RuntimeException("Evaluation not found: " + evaluationId));
+
+        // Authorization check - chỉ cho phép recruiter owner hoặc admin
+        JobDescription job = history.getJobDescription();
+        if (!securityUtils.canCurrentUserAccess(job.getRecruiter().getId())) {
+            throw new RuntimeException("Access denied");
+        }
+
+        // Lấy tất cả evaluations thuộc history này, sorted by score
+        List<Evaluation> evaluations = history.getEvaluations().stream()
+                .sorted(Comparator.comparing(Evaluation::getScore).reversed())
+                .collect(Collectors.toList());
+
+        return buildEvaluationResponse(history, evaluations);
+    }
+
     private List<CV> getCVsForEvaluation(UUID jobId, EvaluationRequest request) {
         // Nếu request có candidateIds cụ thể, chỉ lấy CV của những candidate đó
         if (request.getCandidateIds() != null && !request.getCandidateIds().isEmpty()) {
-            return cvRepository.findLatestCVForCandidates(request.getCandidateIds());
+            // Lấy JobApplications cho những candidates này với job này
+            List<JobApplication> applications = jobApplicationRepository.findByJobId(jobId);
+            return applications.stream()
+                    .filter(app -> request.getCandidateIds().contains(app.getCandidate().getId()))
+                    .map(JobApplication::getCv)
+                    .collect(Collectors.toList());
         } else {
-            // Nếu không có candidateIds, lấy tất cả CV của những candidate đã ứng tuyển vào job này
-            return cvRepository.findAllWithFeatures();
+            // Nếu không có candidateIds, lấy tất cả CV của những candidate đã apply vào job này thông qua JobApplications
+            List<JobApplication> applications = jobApplicationRepository.findByJobIdWithDetails(jobId);
+            if (applications.isEmpty()) {
+                log.warn("No job applications found for job: {}", jobId);
+                return Collections.emptyList();
+            }
+            return applications.stream()
+                    .map(JobApplication::getCv)
+                    .collect(Collectors.toList());
         }
     }
 
@@ -268,5 +316,14 @@ public class EvaluationService {
                 .modelVersion("N/A")
                 .evaluatedBy(user != null ? user.getId() : null)
                 .build();
+    }
+
+    private void updateJobApplicationStatus(UUID jobId, UUID cvId, ApplicationStatus status) {
+        Optional<JobApplication> applicationOpt = jobApplicationRepository.findByJobIdAndCvId(jobId, cvId);
+        applicationOpt.ifPresent(application -> {
+            application.setStatus(status);
+            jobApplicationRepository.save(application);
+            log.debug("Updated JobApplication status to {} for job: {} and CV: {}", status, jobId, cvId);
+        });
     }
 }

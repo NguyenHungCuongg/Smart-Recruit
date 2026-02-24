@@ -4,6 +4,7 @@ import { DashboardLayout } from "../components/DashboardLayout";
 import { FileUploadItem } from "../components/FileUploadItem";
 import { FaArrowLeft, FaUpload, FaUserPlus, FaPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
+import candidateService from "../services/candidateService";
 
 interface CVFile {
   id: string;
@@ -13,12 +14,13 @@ interface CVFile {
 export const CandidateNew = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "",
     email: "",
     phone: "",
   });
   const [cvFiles, setCvFiles] = useState<CVFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -96,7 +98,7 @@ export const CandidateNew = () => {
     e.preventDefault();
 
     // Validation
-    if (!formData.name.trim()) {
+    if (!formData.fullName.trim()) {
       toast.error("Candidate name is required");
       return;
     }
@@ -118,10 +120,27 @@ export const CandidateNew = () => {
       return;
     }
 
-    toast.success("Candidate added successfully!");
-    setTimeout(() => {
-      navigate("/candidates");
-    }, 1500);
+    try {
+      setSubmitting(true);
+
+      // First, create the candidate
+      const candidate = await candidateService.create({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || undefined,
+      });
+
+      // Then upload all CVs for this candidate
+      await Promise.all(cvFiles.map((cvFile) => candidateService.uploadCV(candidate.id, cvFile.file)));
+
+      toast.success(`Candidate added with ${cvFiles.length} CV(s)!`);
+      navigate(`/candidates/${candidate.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to add candidate";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -155,8 +174,8 @@ export const CandidateNew = () => {
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleInputChange}
                   placeholder="e.g., John Doe"
                   className="w-full px-4 py-2.5 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
@@ -276,10 +295,20 @@ export const CandidateNew = () => {
             </Link>
             <button
               type="submit"
-              className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center space-x-2"
+              disabled={submitting}
+              className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <FaUserPlus className="w-4 h-4" />
-              <span>Add Candidate</span>
+              {submitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Adding...</span>
+                </>
+              ) : (
+                <>
+                  <FaUserPlus className="w-4 h-4" />
+                  <span>Add Candidate</span>
+                </>
+              )}
             </button>
           </div>
         </form>

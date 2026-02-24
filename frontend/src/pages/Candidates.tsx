@@ -1,54 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { CandidateCard } from "../components/CandidateCard";
 import notFound from "../assets/not-found.png";
 import { FaSistrix, FaPlus } from "react-icons/fa6";
+import candidateService from "../services/candidateService";
+import type { Candidate } from "../services/candidateService";
+import toast from "react-hot-toast";
+
+interface CandidateWithStats extends Candidate {
+  cvCount: number;
+  latestCv: string;
+}
 
 export const Candidates = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [candidates, setCandidates] = useState<CandidateWithStats[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const candidates = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@email.com",
-      phone: "+1 234 567 8900",
-      cvCount: 3,
-      latestCv: "2024-02-12",
-      skills: ["React", "Node.js", "TypeScript", "AWS"],
-      education: "BACHELOR",
-      experience: 6,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane.smith@email.com",
-      phone: "+1 234 567 8901",
-      cvCount: 2,
-      latestCv: "2024-02-10",
-      skills: ["Python", "Django", "PostgreSQL"],
-      education: "MASTER",
-      experience: 4,
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike.j@email.com",
-      phone: "+1 234 567 8902",
-      cvCount: 1,
-      latestCv: "2024-02-08",
-      skills: ["Vue.js", "Docker", "Kubernetes"],
-      education: "BACHELOR",
-      experience: 5,
-    },
-  ];
+  useEffect(() => {
+    loadCandidates();
+  }, []);
+
+  const loadCandidates = async () => {
+    try {
+      setLoading(true);
+      const candidatesData = await candidateService.getAll();
+
+      // Fetch CVs for each candidate
+      const candidatesWithStats = await Promise.all(
+        candidatesData.map(async (candidate) => {
+          const cvs = await candidateService.getCVs(candidate.id).catch(() => []);
+          const latestCV =
+            cvs.length > 0
+              ? cvs.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())[0]
+              : null;
+
+          return {
+            ...candidate,
+            cvCount: cvs.length,
+            latestCv: latestCV ? latestCV.uploadedAt : "",
+          };
+        }),
+      );
+
+      setCandidates(candidatesWithStats);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load candidates";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredCandidates = candidates.filter(
     (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.skills.some((s) => s.toLowerCase().includes(searchTerm.toLowerCase())),
+      c.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -85,26 +93,32 @@ export const Candidates = () => {
         </div>
 
         {/* Candidates Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCandidates.map((candidate) => (
-            <CandidateCard
-              key={candidate.id}
-              id={candidate.id}
-              name={candidate.name}
-              email={candidate.email}
-              phone={candidate.phone}
-              cvCount={candidate.cvCount}
-              latestCv={candidate.latestCv}
-              skills={candidate.skills}
-              experience={candidate.experience}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCandidates.map((candidate) => (
+              <CandidateCard
+                key={candidate.id}
+                id={candidate.id}
+                name={candidate.fullName}
+                email={candidate.email}
+                phone={candidate.phone}
+                cvCount={candidate.cvCount}
+                latestCv={candidate.latestCv}
+                skills={[]}
+                experience={0}
+              />
+            ))}
 
-        {filteredCandidates.length === 0 && (
-          <div className="bg-card border border-border rounded-2xl p-12 text-center">
-            <img src={notFound} alt="No candidates found" className="mx-auto mb-4 w-64 h-64" />
-            <p className="text-muted-foreground">No candidates found</p>
+            {filteredCandidates.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <img src={notFound} alt="No candidates found" className="mx-auto mb-4 w-64 h-64" />
+                <p className="text-muted-foreground">No candidates found matching your search</p>
+              </div>
+            )}
           </div>
         )}
       </div>

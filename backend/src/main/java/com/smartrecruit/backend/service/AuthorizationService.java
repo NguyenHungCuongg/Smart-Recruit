@@ -45,4 +45,15 @@ public class AuthorizationService {
         }
         return false;
     }
+
+    // Check if user can access a resource owned by recruiterId (Admin can access all, Recruiter can access their own)
+    public void ensureCanAccess(UUID recruiterId, User user) {
+        if (user.getRole() == RoleType.ADMIN) {
+            return;
+        }
+        if (user.getRole() == RoleType.RECRUITER && user.getId().equals(recruiterId)) {
+            return;
+        }
+        throw new AccessDeniedException("You do not have access to this resource");
+    }
 }

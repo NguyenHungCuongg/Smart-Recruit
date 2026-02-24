@@ -1,10 +1,10 @@
 interface CandidateSelectItemProps {
-  id: number;
+  id: string;
   name: string;
   email: string;
   cvCount: number;
   isSelected: boolean;
-  onSelect: (id: number) => void;
+  onSelect: (id: string) => void;
 }
 
 export const CandidateSelectItem = ({ id, name, email, cvCount, isSelected, onSelect }: CandidateSelectItemProps) => {

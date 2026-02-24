@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 interface Evaluation {
-  id: number;
+  id: string;
   date: string;
   candidates: number;
   avgScore: number;

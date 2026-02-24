@@ -1,52 +1,81 @@
 import { useParams, Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaPeopleGroup, FaChartLine, FaCalendarDays } from "react-icons/fa6";
 import { GrLocation, GrAchievement } from "react-icons/gr";
 import { JobStatusBadge } from "../components/JobStatusBadge";
 import { JobInfoTab } from "../components/JobInfoTab";
 import { JobCandidatesTab } from "../components/JobCandidatesTab";
 import { JobEvaluationsTab } from "../components/JobEvaluationsTab";
+import jobService from "../services/jobService";
+import type { Job } from "../services/jobService";
+import applicationService from "../services/applicationService";
+import type { Application } from "../services/applicationService";
+import evaluationService from "../services/evaluationService";
+import type { Evaluation } from "../services/evaluationService";
+import toast from "react-hot-toast";
 
 export const JobDetail = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState<"info" | "candidates" | "evaluations">("info");
+  const [job, setJob] = useState<Job | null>(null);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const job = {
-    id,
-    title: "Senior Full Stack Developer",
-    department: "Engineering",
-    location: "Remote",
-    status: "OPEN",
-    industry: "Technology",
-    description: `We are looking for an experienced Full Stack Developer to join our growing engineering team. 
-    You will work on building scalable web applications using modern technologies and best practices.`,
-    requirements: {
-      skills: ["React", "Node.js", "TypeScript", "PostgreSQL", "Docker", "AWS"],
-      experience: 5,
-      education: "BACHELOR",
-      seniority: "SENIOR",
-    },
-    candidates: 24,
-    evaluations: 2,
-    createdAt: "2024-02-10",
+  useEffect(() => {
+    if (id) {
+      loadJobData();
+    }
+  }, [id]);
+
+  const loadJobData = async () => {
+    if (!id) return;
+
+    try {
+      setLoading(true);
+      const [jobData, appsData, evalsData] = await Promise.all([
+        jobService.getById(id),
+        applicationService.getByJobId(id),
+        evaluationService.getHistory(id),
+      ]);
+      setJob(jobData);
+      setApplications(appsData);
+      setEvaluations(evalsData);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load job details";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const mockCandidates = [
-    { id: 1, name: "John Doe", score: 92, skills: ["React", "Node.js", "TypeScript"], uploadedAt: "2024-02-12" },
-    { id: 2, name: "Jane Smith", score: 87, skills: ["React", "Python", "AWS"], uploadedAt: "2024-02-11" },
-    { id: 3, name: "Mike Johnson", score: 84, skills: ["Vue.js", "Node.js", "Docker"], uploadedAt: "2024-02-10" },
-  ];
-
-  const mockEvaluations = [
-    { id: 1, date: "2024-02-13", candidates: 15, avgScore: 85.3, modelVersion: "v1.2.0" },
-    { id: 2, date: "2024-02-11", candidates: 9, avgScore: 88.1, modelVersion: "v1.2.0" },
-  ];
-
   const [daysOpen] = useState(() =>
-    Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+    job ? Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0,
   );
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!job) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Job not found</p>
+          <Link to="/jobs" className="text-primary hover:text-primary/80 mt-4 inline-block">
+            ← Back to Jobs
+          </Link>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -79,12 +108,6 @@ export const JobDetail = () => {
             >
               Edit Job
             </Link>
-            <Link
-              to={`/evaluations/${id}`}
-              className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
-            >
-              Run Evaluation
-            </Link>
           </div>
         </div>
 
@@ -94,7 +117,7 @@ export const JobDetail = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total Candidates</p>
-                <p className="text-3xl font-bold text-foreground">{job.candidates}</p>
+                <p className="text-3xl font-bold text-foreground">{applications.length}</p>
               </div>
               <FaPeopleGroup className="w-12 h-12 text-primary rounded-xl bg-primary/20 p-2" />
             </div>
@@ -103,7 +126,7 @@ export const JobDetail = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Evaluations Run</p>
-                <p className="text-3xl font-bold text-foreground">{job.evaluations}</p>
+                <p className="text-3xl font-bold text-foreground">{evaluations.length}</p>
               </div>
               <FaChartLine className="w-12 h-12 text-primary rounded-xl bg-primary/20 p-2" />
             </div>
@@ -141,7 +164,7 @@ export const JobDetail = () => {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Candidates ({mockCandidates.length})
+                Candidates ({applications.length})
               </button>
               <button
                 onClick={() => setActiveTab("evaluations")}
@@ -151,20 +174,38 @@ export const JobDetail = () => {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Evaluations ({mockEvaluations.length})
+                Evaluations ({evaluations.length})
               </button>
             </div>
           </div>
 
           <div className="p-6">
             {/* Job Information Tab */}
-            {activeTab === "info" && <JobInfoTab description={job.description} requirements={job.requirements} />}
+            {activeTab === "info" && (
+              <JobInfoTab
+                description={job.description || "No description provided"}
+                requirements={{ skills: [], experience: 0, education: "BACHELOR", seniority: "JUNIOR" }}
+              />
+            )}
 
             {/* Candidates Tab */}
-            {activeTab === "candidates" && <JobCandidatesTab candidates={mockCandidates} />}
+            {activeTab === "candidates" && <JobCandidatesTab jobId={job.id} />}
 
             {/* Evaluations Tab */}
-            {activeTab === "evaluations" && <JobEvaluationsTab evaluations={mockEvaluations} />}
+            {activeTab === "evaluations" && (
+              <JobEvaluationsTab
+                evaluations={evaluations.map((e) => ({
+                  id: e.evaluationId,
+                  date: e.evaluatedAt,
+                  candidates: e.totalEvaluated,
+                  avgScore:
+                    e.candidates.length > 0
+                      ? e.candidates.reduce((sum, r) => sum + r.score, 0) / e.candidates.length
+                      : 0,
+                  modelVersion: e.modelVersion,
+                }))}
+              />
+            )}
           </div>
         </div>
       </div>

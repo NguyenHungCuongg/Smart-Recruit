@@ -31,6 +31,15 @@ public class JobDescription {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    @Column(length = 100)
+    private String department;
+
+    @Column(length = 100)
+    private String location;
+
+    @Column(name = "jd_file_path", length = 500)
+    private String jdFilePath;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "industry", length = 50)
     private IndustryType industry;

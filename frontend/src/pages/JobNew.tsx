@@ -4,6 +4,7 @@ import { DashboardLayout } from "../components/DashboardLayout";
 import { FileUploadItem } from "../components/FileUploadItem";
 import { FaArrowLeft, FaUpload, FaFileAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
+import jobService from "../services/jobService";
 
 export const JobNew = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export const JobNew = () => {
   });
   const [jdFile, setJdFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -101,10 +103,24 @@ export const JobNew = () => {
       return;
     }
 
-    toast.success("Job created successfully!");
-    setTimeout(() => {
-      navigate("/jobs");
-    }, 1500);
+    try {
+      setSubmitting(true);
+      const job = await jobService.create({
+        title: formData.title,
+        department: formData.department,
+        location: formData.location,
+        status: formData.status,
+        jdFile: jdFile,
+      });
+
+      toast.success("Job created successfully!");
+      navigate(`/jobs/${job.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create job";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -252,10 +268,20 @@ export const JobNew = () => {
             </Link>
             <button
               type="submit"
-              className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center space-x-2"
+              disabled={submitting}
+              className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <FaFileAlt className="w-4 h-4" />
-              <span>Create Job</span>
+              {submitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Creating...</span>
+                </>
+              ) : (
+                <>
+                  <FaFileAlt className="w-4 h-4" />
+                  <span>Create Job</span>
+                </>
+              )}
             </button>
           </div>
         </form>

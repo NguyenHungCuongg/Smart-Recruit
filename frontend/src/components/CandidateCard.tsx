@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import { GrMailOption, GrPhone } from "react-icons/gr";
 
 interface CandidateCardProps {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
   cvCount: number;
   latestCv: string;
   skills: string[];
@@ -29,23 +29,23 @@ export const CandidateCard = ({
     >
       <div className="flex items-start justify-between mb-4">
         <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-bold text-2xl">
-          {name.charAt(0)}
+          {name?.charAt(0) || "?"}
         </div>
         <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
           {cvCount} CV{cvCount > 1 ? "s" : ""}
         </span>
       </div>
 
-      <h3 className="text-xl font-bold text-foreground mb-2">{name}</h3>
+      <h3 className="text-xl font-bold text-foreground mb-2">{name || "Unnamed Candidate"}</h3>
 
       <div className="space-y-2 mb-4">
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <GrMailOption className="w-4 h-4" />
-          <span>{email}</span>
+          <span>{email || "No email"}</span>
         </div>
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <GrPhone className="w-4 h-4 transform" />
-          <span>{phone}</span>
+          <span>{phone || "No phone"}</span>
         </div>
       </div>
 

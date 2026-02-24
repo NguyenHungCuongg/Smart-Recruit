@@ -20,6 +20,9 @@ public class JobResponse {
     private UUID id;
     private String title;
     private String description;
+    private String department;
+    private String location;
+    private String jdFilePath;
     private IndustryType industry;
     private JobRequirements requirements;
     private JobStatus status;

@@ -1,74 +1,69 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { useAuth } from "../hooks/useAuth";
 import { JobStatusBadge } from "../components/JobStatusBadge";
 import { FaSistrix, FaPlus, FaRegEye, FaRegPenToSquare } from "react-icons/fa6";
 import notFound from "../assets/not-found.png";
+import jobService from "../services/jobService";
+import type { Job } from "../services/jobService"; //Lấy Interface Job
+import applicationService from "../services/applicationService";
+import evaluationService from "../services/evaluationService";
+import toast from "react-hot-toast";
+
+interface JobWithStats extends Job {
+  candidates: number;
+  evaluations: number;
+}
 
 export const Jobs = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [jobs, setJobs] = useState<JobWithStats[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const jobs = [
-    {
-      id: 1,
-      title: "Senior Full Stack Developer",
-      department: "Engineering",
-      location: "Remote",
-      status: "OPEN",
-      candidates: 24,
-      evaluations: 2,
-      createdAt: "2024-02-10",
-      industry: "Technology",
-    },
-    {
-      id: 2,
-      title: "Product Manager",
-      department: "Product",
-      location: "San Francisco, CA",
-      status: "ACTIVE",
-      candidates: 18,
-      evaluations: 3,
-      createdAt: "2024-02-08",
-      industry: "Technology",
-    },
-    {
-      id: 3,
-      title: "UX Designer",
-      department: "Design",
-      location: "New York, NY",
-      status: "OPEN",
-      candidates: 12,
-      evaluations: 1,
-      createdAt: "2024-02-05",
-      industry: "Design",
-    },
-    {
-      id: 4,
-      title: "Data Scientist",
-      department: "Data",
-      location: "Remote",
-      status: "CLOSED",
-      candidates: 32,
-      evaluations: 5,
-      createdAt: "2024-01-28",
-      industry: "Analytics",
-    },
-    {
-      id: 5,
-      title: "DevOps Engineer",
-      department: "Engineering",
-      location: "Austin, TX",
-      status: "ACTIVE",
-      candidates: 15,
-      evaluations: 2,
-      createdAt: "2024-02-12",
-      industry: "Technology",
-    },
-  ];
+  useEffect(() => {
+    loadJobs();
+  }, []);
 
+  const loadJobs = async () => {
+    try {
+      setLoading(true);
+      // Fetch tất cả các job trước
+      const jobsData = await jobService.getAll();
+
+      // Sau đó fetch stats (Các candidates và evaluations) cho mỗi job
+      const jobsWithStats = await Promise.all(
+        jobsData.map(async (job) => {
+          try {
+            const applications = await applicationService.getByJobId(job.id);
+            const evaluations = await evaluationService.getHistory(job.id);
+            return {
+              ...job,
+              candidates: applications.length,
+              evaluations: evaluations.length,
+            };
+          } catch {
+            return {
+              ...job,
+              candidates: 0,
+              evaluations: 0,
+            };
+          }
+        }),
+      );
+
+      setJobs(jobsWithStats);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load jobs";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mảng jobs đã được lọc theo search term và status filter
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,70 +129,76 @@ export const Jobs = () => {
 
         {/* Jobs Table */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-secondary/50 border-b border-border">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Job Title</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Department</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Location</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Candidates</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Evaluations</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Created</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredJobs.map((job) => (
-                  <tr key={job.id} className="hover:bg-secondary/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <Link to={`/jobs/${job.id}`} className="font-semibold text-foreground hover:text-primary">
-                        {job.title}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">{job.department}</td>
-                    <td className="px-6 py-4 text-muted-foreground">{job.location}</td>
-                    <td className="px-6 py-4">
-                      <JobStatusBadge status={job.status} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center space-x-1">
-                        <span className="text-foreground font-semibold">{job.candidates}</span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">{job.evaluations}</td>
-                    <td className="px-6 py-4 text-muted-foreground text-sm">
-                      {new Date(job.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <Link
-                          to={`/jobs/${job.id}`}
-                          className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <FaRegEye className="w-4 h-4 text-chart-1" />
-                        </Link>
-                        <Link
-                          to={`/jobs/${job.id}/edit`}
-                          className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <FaRegPenToSquare className="w-4 h-4 text-primary" />
-                        </Link>
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-secondary/50 border-b border-border">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Job Title</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Department</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Location</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Candidates</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Evaluations</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Created</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredJobs.map((job) => (
+                    <tr key={job.id} className="hover:bg-secondary/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <Link to={`/jobs/${job.id}`} className="font-semibold text-foreground hover:text-primary">
+                          {job.title}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">{job.department}</td>
+                      <td className="px-6 py-4 text-muted-foreground">{job.location}</td>
+                      <td className="px-6 py-4">
+                        <JobStatusBadge status={job.status} />
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center space-x-1">
+                          <span className="text-foreground font-semibold">{job.candidates}</span>
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">{job.evaluations}</td>
+                      <td className="px-6 py-4 text-muted-foreground text-sm">
+                        {new Date(job.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <Link
+                            to={`/jobs/${job.id}`}
+                            className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <FaRegEye className="w-4 h-4 text-chart-1" />
+                          </Link>
+                          <Link
+                            to={`/jobs/${job.id}/edit`}
+                            className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <FaRegPenToSquare className="w-4 h-4 text-primary" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-          {filteredJobs.length === 0 && (
-            <div className="text-center py-12">
-              <img src={notFound} alt="No jobs found" className="mx-auto mb-4 w-64 h-64" />
-              <p className="text-muted-foreground">No jobs found matching your criteria</p>
+              {filteredJobs.length === 0 && (
+                <div className="text-center py-12">
+                  <img src={notFound} alt="No jobs found" className="mx-auto mb-4 w-64 h-64" />
+                  <p className="text-muted-foreground">No jobs found matching your criteria</p>
+                </div>
+              )}
             </div>
           )}
         </div>

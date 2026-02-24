@@ -1,135 +1,220 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
-import { FaPlus, FaTimes, FaUserPlus } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { FaPlus, FaTimes, FaUserPlus, FaChartLine } from "react-icons/fa";
 import { CandidateSelectItem } from "./CandidateSelectItem";
 import { CVSelectItem } from "./CVSelectItem";
 import toast from "react-hot-toast";
-
-interface Candidate {
-  id: number;
-  name: string;
-  score: number;
-  skills: string[];
-  uploadedAt: string;
-}
+import applicationService from "../services/applicationService";
+import type { Application } from "../services/applicationService";
+import candidateService from "../services/candidateService";
+import evaluationService from "../services/evaluationService";
 
 interface JobCandidatesTabProps {
-  candidates: Candidate[];
+  jobId: string;
 }
 
-// Mock data - danh sách tất cả candidates trong hệ thống
-const allCandidates = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@email.com",
-    cvs: [
-      { id: 101, fileName: "john_cv_2024.pdf", uploadedAt: "2024-02-12" },
-      { id: 102, fileName: "john_cv_senior.pdf", uploadedAt: "2024-01-15" },
-    ],
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@email.com",
-    cvs: [{ id: 201, fileName: "jane_resume.pdf", uploadedAt: "2024-02-11" }],
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike.j@email.com",
-    cvs: [{ id: 301, fileName: "mike_cv.pdf", uploadedAt: "2024-02-10" }],
-  },
-  {
-    id: 4,
-    name: "Sarah Williams",
-    email: "sarah.w@email.com",
-    cvs: [
-      { id: 401, fileName: "sarah_cv_latest.pdf", uploadedAt: "2024-02-09" },
-      { id: 402, fileName: "sarah_cv_old.pdf", uploadedAt: "2023-12-01" },
-    ],
-  },
-  {
-    id: 5,
-    name: "David Brown",
-    email: "david.b@email.com",
-    cvs: [{ id: 501, fileName: "david_resume.pdf", uploadedAt: "2024-02-08" }],
-  },
-];
+interface CandidateWithCVs {
+  id: string;
+  fullName: string;
+  email: string;
+  cvs: Array<{
+    id: string;
+    fileName: string;
+    uploadedAt: string;
+  }>;
+}
 
-export const JobCandidatesTab = ({ candidates }: JobCandidatesTabProps) => {
+export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
+  const navigate = useNavigate();
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [allCandidates, setAllCandidates] = useState<CandidateWithCVs[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [evaluating, setEvaluating] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
-  const [selectedCV, setSelectedCV] = useState<number | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
+  const [selectedCV, setSelectedCV] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleAddCandidate = () => {
+  useEffect(() => {
+    loadApplications();
+    loadAllCandidates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+
+  const loadApplications = async () => {
+    try {
+      setLoading(true);
+      const apps = await applicationService.getByJobId(jobId);
+      setApplications(apps);
+    } catch {
+      toast.error("Failed to load applications");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAllCandidates = async () => {
+    try {
+      const candidates = await candidateService.getAll();
+      const candidatesWithCVs = await Promise.all(
+        candidates.map(async (candidate) => {
+          const cvs = await candidateService.getCVs(candidate.id).catch(() => []);
+          return {
+            id: candidate.id,
+            fullName: candidate.fullName,
+            email: candidate.email,
+            cvs: cvs,
+          };
+        }),
+      );
+      setAllCandidates(candidatesWithCVs.filter((c) => c.cvs.length > 0));
+    } catch {
+      toast.error("Failed to load candidates");
+    }
+  };
+
+  const handleAddCandidate = async () => {
     if (!selectedCandidate || !selectedCV) {
       toast.error("Please select a candidate and their CV");
       return;
     }
 
-    // TODO: Integrate with backend API
-    const candidate = allCandidates.find((c) => c.id === selectedCandidate);
-    const cv = candidate?.cvs.find((c) => c.id === selectedCV);
+    try {
+      await applicationService.create({
+        jobId: jobId,
+        cvId: selectedCV,
+      });
 
-    toast.success(`Added ${candidate?.name} with ${cv?.fileName} to this job!`);
-    setShowModal(false);
-    setSelectedCandidate(null);
-    setSelectedCV(null);
-    setSearchTerm("");
+      toast.success("Candidate added to job successfully!");
+      setShowModal(false);
+      setSelectedCandidate(null);
+      setSelectedCV(null);
+      setSearchTerm("");
+      loadApplications(); // Reload applications
+    } catch {
+      toast.error("Failed to add candidate to job");
+    }
+  };
+
+  const handleRunEvaluation = async () => {
+    if (applications.length === 0) {
+      toast.error("No candidates to evaluate");
+      return;
+    }
+
+    const confirm = window.confirm(
+      `Run evaluation for ${applications.length} candidate(s)? This will send their CVs to the ML service for scoring.`,
+    );
+
+    if (!confirm) return;
+
+    try {
+      setEvaluating(true);
+      const candidateIds = applications.map((app) => app.candidateId);
+      const evaluation = await evaluationService.runEvaluation(jobId, candidateIds);
+
+      toast.success("Evaluation completed successfully!");
+      navigate(`/evaluations/${evaluation.evaluationId}`);
+    } catch (error: unknown) {
+      // Extract error message from response
+      const err = error as { response?: { data?: { message?: string; error?: string } }; message?: string };
+      const errorMessage = err?.response?.data?.message || err?.message || "Failed to run evaluation";
+      const errorCode = err?.response?.data?.error;
+
+      if (errorCode === "ML_SERVICE_UNAVAILABLE") {
+        toast.error("ML Service is not available. Please ensure it is running and try again.");
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setEvaluating(false);
+    }
   };
 
   const filteredCandidates = allCandidates.filter(
     (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      c.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const selectedCandidateData = allCandidates.find((c) => c.id === selectedCandidate);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {/* Add Candidate Button */}
+      {/* Add Candidate & Run Evaluation Buttons */}
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-muted-foreground">
-          {candidates.length} candidate{candidates.length !== 1 ? "s" : ""} applied to this job
+          {applications.length} candidate{applications.length !== 1 ? "s" : ""} applied to this job
         </p>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center space-x-2"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Add Candidate to this Job</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          {applications.length > 0 && (
+            <button
+              onClick={handleRunEvaluation}
+              disabled={evaluating}
+              className="px-4 py-2 bg-chart-1 hover:bg-chart-1/90 text-white rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {evaluating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Evaluating...</span>
+                </>
+              ) : (
+                <>
+                  <FaChartLine className="w-4 h-4" />
+                  <span>Run Evaluation</span>
+                </>
+              )}
+            </button>
+          )}
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center space-x-2"
+          >
+            <FaPlus className="w-4 h-4" />
+            <span>Add Candidate</span>
+          </button>
+        </div>
       </div>
 
-      {/* Candidates List */}
-      {candidates.map((candidate) => (
-        <div key={candidate.id} className="bg-secondary/30 rounded-xl p-4 hover:bg-secondary/50 transition-colors">
+      {/* Applications List */}
+      {applications.map((application) => (
+        <div key={application.id} className="bg-secondary/30 rounded-xl p-4 hover:bg-secondary/50 transition-colors">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <Link to={`/candidates/${candidate.id}`} className="font-semibold text-foreground hover:text-primary">
-                {candidate.name}
+              <Link
+                to={`/candidates/${application.candidateId}`}
+                className="font-semibold text-foreground hover:text-primary"
+              >
+                {application.candidateName}
               </Link>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {candidate.skills.map((skill) => (
-                  <span key={skill} className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">Uploaded {candidate.uploadedAt}</p>
+              <p className="text-sm text-muted-foreground mt-1">{application.cvFileName}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Applied {new Date(application.appliedAt).toLocaleDateString()}
+              </p>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-foreground">{candidate.score}</div>
-              <div className="text-xs text-muted-foreground">Match Score</div>
+              {application.score !== undefined && application.score !== null ? (
+                <>
+                  <div className="text-3xl font-bold text-foreground">{application.score.toFixed(1)}</div>
+                  <div className="text-xs text-muted-foreground">Match Score</div>
+                </>
+              ) : (
+                <div className="px-3 py-1 bg-secondary rounded text-sm text-muted-foreground">Not evaluated</div>
+              )}
             </div>
           </div>
         </div>
       ))}
 
-      {candidates.length === 0 && (
+      {applications.length === 0 && (
         <div className="text-center py-12 bg-secondary/20 rounded-xl">
           <FaUserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground mb-4">No candidates applied yet</p>
@@ -187,7 +272,7 @@ export const JobCandidatesTab = ({ candidates }: JobCandidatesTabProps) => {
                     <CandidateSelectItem
                       key={candidate.id}
                       id={candidate.id}
-                      name={candidate.name}
+                      name={candidate.fullName}
                       email={candidate.email}
                       cvCount={candidate.cvs.length}
                       isSelected={selectedCandidate === candidate.id}

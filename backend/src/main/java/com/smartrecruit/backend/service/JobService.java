@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.service;
 
 import com.smartrecruit.backend.domain.job.JobRequirements;
+import com.smartrecruit.backend.dto.job.JobCreateMultipartRequest;
 import com.smartrecruit.backend.dto.job.JobCreateRequest;
 import com.smartrecruit.backend.dto.job.JobResponse;
 import com.smartrecruit.backend.dto.job.JobUpdateRequest;
@@ -22,6 +23,7 @@ public class JobService {
 
     private final JobDescriptionRepository jobDescriptionRepository;
     private final AuthorizationService authorizationService;
+    private final FileStorageService fileStorageService;
 
     @Transactional
     public JobResponse create(JobCreateRequest request, User currentUser) {
@@ -38,6 +40,35 @@ public class JobService {
                 .recruiter(currentUser)
                 .build();
         job = jobDescriptionRepository.save(job);
+        return toResponse(job);
+    }
+
+    @Transactional
+    public JobResponse createWithFile(JobCreateMultipartRequest request, User currentUser) {
+        if (currentUser.getRole() != RoleType.RECRUITER && currentUser.getRole() != RoleType.ADMIN) {
+            throw new org.springframework.security.access.AccessDeniedException("Only RECRUITER or ADMIN can create jobs");
+        }
+
+        // Create job entity first to get ID
+        JobDescription job = JobDescription.builder()
+                .title(request.getTitle())
+                .description("Job in " + request.getDepartment() + ", " + request.getLocation())
+                .department(request.getDepartment())
+                .location(request.getLocation())
+                .status(request.getStatus())
+                .recruiter(currentUser)
+                .requirements(new JobRequirements())
+                .build();
+        
+        job = jobDescriptionRepository.save(job);
+
+        // Store JD file
+        if (request.getJdFile() != null && !request.getJdFile().isEmpty()) {
+            String filePath = fileStorageService.storeJobDescriptionFile(request.getJdFile(), job.getId());
+            job.setJdFilePath(filePath);
+            job = jobDescriptionRepository.save(job);
+        }
+
         return toResponse(job);
     }
 
@@ -102,6 +133,9 @@ public class JobService {
                 .id(job.getId())
                 .title(job.getTitle())
                 .description(job.getDescription())
+                .department(job.getDepartment())
+                .location(job.getLocation())
+                .jdFilePath(job.getJdFilePath())
                 .industry(job.getIndustry())
                 .requirements(job.getRequirements())
                 .status(job.getStatus())
