@@ -36,7 +36,7 @@ public class JDTextExtractor {
                 .replaceAll("\n+", "\n")
                 .trim();
     }
-    
+
     public String extractTextNormalized(InputStream inputStream) throws IOException, TikaException {
         String raw = extractText(inputStream);
         return raw != null ? normalizeForParsing(raw) : "";

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { FileUploadItem } from "../components/FileUploadItem";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FaArrowLeft, FaUpload, FaUserPlus, FaPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import candidateService from "../services/candidateService";
@@ -300,7 +301,7 @@ export const CandidateNew = () => {
             >
               {submitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <LoadingSpinner size="sm" className="border-white" />
                   <span>Adding...</span>
                 </>
               ) : (

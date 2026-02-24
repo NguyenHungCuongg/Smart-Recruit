@@ -1,5 +1,6 @@
 import { DashboardLayout } from "../components/DashboardLayout";
 import { Link } from "react-router-dom";
+import { LoadingSection } from "../components/LoadingSection";
 import { FaRegClock } from "react-icons/fa6";
 import notFound from "../assets/not-found.png";
 import { useState, useEffect } from "react";
@@ -97,9 +98,7 @@ export const Evaluations = () => {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
+            <LoadingSection />
           ) : (
             <div className="divide-y divide-border">
               {evaluations.map((evaluation) => {

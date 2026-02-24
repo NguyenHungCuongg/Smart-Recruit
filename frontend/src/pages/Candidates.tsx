@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { CandidateCard } from "../components/CandidateCard";
+import { LoadingSection } from "../components/LoadingSection";
 import notFound from "../assets/not-found.png";
 import { FaSistrix, FaPlus } from "react-icons/fa6";
 import candidateService from "../services/candidateService";
@@ -94,9 +95,7 @@ export const Candidates = () => {
 
         {/* Candidates Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
+          <LoadingSection />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCandidates.map((candidate) => (

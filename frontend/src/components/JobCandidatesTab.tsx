@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { FaPlus, FaTimes, FaUserPlus, FaChartLine } from "react-icons/fa";
 import { CandidateSelectItem } from "./CandidateSelectItem";
 import { CVSelectItem } from "./CVSelectItem";
+import { LoadingSection } from "./LoadingSection";
+import { LoadingSpinner } from "./LoadingSpinner";
 import toast from "react-hot-toast";
 import applicationService from "../services/applicationService";
 import type { Application } from "../services/applicationService";
@@ -140,11 +142,7 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
   const selectedCandidateData = allCandidates.find((c) => c.id === selectedCandidate);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingSection />;
   }
 
   return (
@@ -163,7 +161,7 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
             >
               {evaluating ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <LoadingSpinner size="sm" className="border-white" />
                   <span>Evaluating...</span>
                 </>
               ) : (

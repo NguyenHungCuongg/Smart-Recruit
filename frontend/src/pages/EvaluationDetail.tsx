@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { EvaluationResultCard } from "../components/EvaluationResultCard";
+import { LoadingSection } from "../components/LoadingSection";
 import evaluationService, { type Evaluation } from "../services/evaluationService";
 import { toast } from "react-hot-toast";
 
@@ -33,9 +34,7 @@ export const EvaluationDetail = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <LoadingSection />
       </DashboardLayout>
     );
   }

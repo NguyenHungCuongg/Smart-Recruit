@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { CandidateCVsTab } from "../components/CandidateCVsTab";
 import { CandidateApplicationsTab } from "../components/CandidateApplicationsTab";
+import { LoadingSection } from "../components/LoadingSection";
 import { GrMailOption, GrPhone } from "react-icons/gr";
 import candidateService, { type Candidate, type CVSummary } from "../services/candidateService";
 import applicationService, { type Application } from "../services/applicationService";
@@ -45,9 +46,7 @@ export const CandidateDetail = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <LoadingSection />
       </DashboardLayout>
     );
   }

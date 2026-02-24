@@ -7,6 +7,7 @@ import { JobStatusBadge } from "../components/JobStatusBadge";
 import { JobInfoTab } from "../components/JobInfoTab";
 import { JobCandidatesTab } from "../components/JobCandidatesTab";
 import { JobEvaluationsTab } from "../components/JobEvaluationsTab";
+import { LoadingSection } from "../components/LoadingSection";
 import jobService from "../services/jobService";
 import type { Job } from "../services/jobService";
 import applicationService from "../services/applicationService";
@@ -57,9 +58,7 @@ export const JobDetail = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <LoadingSection />
       </DashboardLayout>
     );
   }
