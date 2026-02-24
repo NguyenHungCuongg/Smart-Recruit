@@ -34,29 +34,23 @@ public class JobApplicationService {
     public JobApplicationResponse create(JobApplicationRequest request, User currentUser) {
         log.info("Creating job application for job: {} and CV: {}", request.getJobId(), request.getCvId());
 
-        // Validate job exists
         JobDescription job = jobDescriptionRepository.findById(request.getJobId())
                 .orElseThrow(() -> new RuntimeException("Job not found: " + request.getJobId()));
 
-        // Authorization: only the job owner can add candidates to their job
         authorizationService.ensureCanAccess(job.getRecruiter().getId(), currentUser);
 
-        // Validate CV exists
         CV cv = cvRepository.findById(request.getCvId())
                 .orElseThrow(() -> new RuntimeException("CV not found: " + request.getCvId()));
 
-        // Validate candidate exists (from CV)
         Candidate candidate = cv.getCandidate();
         if (candidate == null) {
             throw new RuntimeException("CV has no associated candidate");
         }
 
-        // Check if this CV is already applied to this job
         if (jobApplicationRepository.existsByJobIdAndCvId(request.getJobId(), request.getCvId())) {
             throw new RuntimeException("This CV has already been applied to this job");
         }
 
-        // Create job application
         JobApplication application = JobApplication.builder()
                 .job(job)
                 .candidate(candidate)

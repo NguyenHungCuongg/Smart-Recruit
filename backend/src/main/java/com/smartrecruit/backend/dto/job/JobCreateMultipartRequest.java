@@ -31,6 +31,5 @@ public class JobCreateMultipartRequest {
     @NotNull
     private JobStatus status;
 
-    // JD file is optional - can create job without file
     private MultipartFile jdFile;
 }

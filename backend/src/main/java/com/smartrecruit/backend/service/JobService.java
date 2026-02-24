@@ -10,6 +10,7 @@ import com.smartrecruit.backend.entity.User;
 import com.smartrecruit.backend.enums.RoleType;
 import com.smartrecruit.backend.repository.JobDescriptionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +20,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JobService {
 
     private final JobDescriptionRepository jobDescriptionRepository;
     private final AuthorizationService authorizationService;
     private final FileStorageService fileStorageService;
+    private final JDTextExtractor jdTextExtractor;
+    private final JDFeatureParser jdFeatureParser;
 
     @Transactional
     public JobResponse create(JobCreateRequest request, User currentUser) {
@@ -49,15 +53,42 @@ public class JobService {
             throw new org.springframework.security.access.AccessDeniedException("Only RECRUITER or ADMIN can create jobs");
         }
 
-        // Create job entity first to get ID
+        // Parse JD file to extract requirements
+        JobRequirements requirements = new JobRequirements();
+        String parsedDescription = null;
+        
+        if (request.getJdFile() != null && !request.getJdFile().isEmpty()) {
+            try {
+                log.info("Parsing JD file for job: {}", request.getTitle());
+                
+                // Extract text from JD file
+                String jdText = jdTextExtractor.extractTextNormalized(request.getJdFile().getInputStream());
+                parsedDescription = jdText;
+                
+                // Parse requirements from text
+                requirements = jdFeatureParser.parse(jdText);
+                
+                log.info("Parsed JD requirements - Skills: {}, MinExp: {}, Education: {}, Seniority: {}", 
+                        requirements.getSkills() != null ? requirements.getSkills().size() : 0,
+                        requirements.getMinExperience(),
+                        requirements.getEducation(),
+                        requirements.getSeniority());
+                        
+            } catch (Exception e) {
+                log.warn("Failed to parse JD file, using empty requirements", e);
+                requirements = new JobRequirements();
+            }
+        }
+
+        // Create job entity with parsed requirements
         JobDescription job = JobDescription.builder()
                 .title(request.getTitle())
-                .description("Job in " + request.getDepartment() + ", " + request.getLocation())
+                .description(parsedDescription != null ? parsedDescription : "Job in " + request.getDepartment() + ", " + request.getLocation())
                 .department(request.getDepartment())
                 .location(request.getLocation())
                 .status(request.getStatus())
                 .recruiter(currentUser)
-                .requirements(new JobRequirements())
+                .requirements(requirements)
                 .build();
         
         job = jobDescriptionRepository.save(job);

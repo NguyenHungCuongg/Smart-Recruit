@@ -31,11 +31,11 @@ public class JobController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<JobResponse> create(
-            @RequestParam(value = "title", required = false) String title,
-            @RequestParam(value = "department", required = false) String department,
-            @RequestParam(value = "location", required = false) String location,
-            @RequestParam(value = "status", required = false) String statusStr,
-            @RequestParam(value = "jdFile", required = false) MultipartFile jdFile
+        @RequestParam(value = "title", required = false) String title,
+        @RequestParam(value = "department", required = false) String department,
+        @RequestParam(value = "location", required = false) String location,
+        @RequestParam(value = "status", required = false) String statusStr,
+        @RequestParam(value = "jdFile", required = false) MultipartFile jdFile
     ) {
         log.info("Received job creation request - title: {}, department: {}, location: {}, status: {}, file: {}", 
                  title, department, location, statusStr, jdFile != null ? jdFile.getOriginalFilename() : "null");
