@@ -16,6 +16,11 @@ const adminUserService = {
     const response = await apiClient.get("/admin/users");
     return response.data;
   },
+
+  updateStatus: async (userId: string, active: boolean): Promise<AdminUser> => {
+    const response = await apiClient.patch(`/admin/users/${userId}/status`, { active });
+    return response.data;
+  },
 };
 
 export default adminUserService;

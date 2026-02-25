@@ -2,16 +2,19 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { LoadingSection } from "../components/LoadingSection";
-import { FaSistrix, FaPlus, FaRegPenToSquare, FaRegTrashCan } from "react-icons/fa6";
+import { FaSistrix, FaPlus } from "react-icons/fa6";
 import toast from "react-hot-toast";
 import adminUserService from "../services/adminUserService";
 import type { AdminUser } from "../services/adminUserService";
+import { useAuth } from "../hooks/useAuth";
 
 export const AdminUsers = () => {
+  const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<"ALL" | "ADMIN" | "RECRUITER">("ALL");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -47,6 +50,29 @@ export const AdminUsers = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const handleToggleStatus = async (targetUser: AdminUser) => {
+    const nextActive = !targetUser.active;
+    const actionLabel = nextActive ? "reactivate" : "deactivate";
+
+    try {
+      setUpdatingUserId(targetUser.id);
+      const updatedUser = await adminUserService.updateStatus(targetUser.id, nextActive);
+      setUsers((prev) => prev.map((item) => (item.id === updatedUser.id ? updatedUser : item)));
+      toast.success(`User ${actionLabel}d successfully`);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        toast.error("You do not have permission to change user status");
+      } else if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const message = (error.response.data as { message?: string } | undefined)?.message;
+        toast.error(message || `Failed to ${actionLabel} user`);
+      } else {
+        toast.error(error instanceof Error ? error.message : `Failed to ${actionLabel} user`);
+      }
+    } finally {
+      setUpdatingUserId(null);
+    }
   };
 
   const stats = {
@@ -139,7 +165,7 @@ export const AdminUsers = () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Jobs</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Created</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Last Login</th>
-                      <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Actions</th>
+                      <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -185,16 +211,21 @@ export const AdminUsers = () => {
                             {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "N/A"}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button
-                              className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
-                              title="Delete"
-                              disabled
-                            >
-                              <FaRegTrashCan className="w-4 h-4 text-destructive" />
-                            </button>
-                          </div>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(user)}
+                            disabled={
+                              updatingUserId === user.id || (!user.active && user.id === currentUser?.id) || loading
+                            }
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              user.active
+                                ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                                : "bg-primary/10 text-primary hover:bg-primary/20"
+                            }`}
+                          >
+                            {updatingUserId === user.id ? "Updating..." : user.active ? "Deactivate" : "Reactivate"}
+                          </button>
                         </td>
                       </tr>
                     ))}

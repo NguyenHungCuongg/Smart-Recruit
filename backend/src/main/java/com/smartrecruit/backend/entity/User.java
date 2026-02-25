@@ -39,12 +39,19 @@ public class User implements UserDetails {
     @Column(nullable = false, length = 20)
     private RoleType role;
 
+    @Builder.Default
+    @Column(name = "active", nullable = false, columnDefinition = "boolean default true")
+    private Boolean active = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (active == null) {
+            active = true;
+        }
     }
 
     @OneToMany(mappedBy = "recruiter", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -68,5 +75,10 @@ public class User implements UserDetails {
     @Override
     public String getUsername() {
         return email;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return Boolean.TRUE.equals(active);
     }
 }
