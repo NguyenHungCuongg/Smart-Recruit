@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { LoadingSection } from "../components/LoadingSection";
+import { ConfirmationDialog } from "../components/ConfirmationDialog";
 import { FaSistrix, FaPlus } from "react-icons/fa6";
 import toast from "react-hot-toast";
 import adminUserService from "../services/adminUserService";
@@ -15,6 +16,8 @@ export const AdminUsers = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -52,15 +55,19 @@ export const AdminUsers = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const handleToggleStatus = async (targetUser: AdminUser) => {
-    const nextActive = !targetUser.active;
+  const handleToggleStatus = async () => {
+    if (!selectedUser) return;
+
+    const nextActive = !selectedUser.active;
     const actionLabel = nextActive ? "reactivate" : "deactivate";
 
     try {
-      setUpdatingUserId(targetUser.id);
-      const updatedUser = await adminUserService.updateStatus(targetUser.id, nextActive);
+      setUpdatingUserId(selectedUser.id);
+      const updatedUser = await adminUserService.updateStatus(selectedUser.id, nextActive);
       setUsers((prev) => prev.map((item) => (item.id === updatedUser.id ? updatedUser : item)));
       toast.success(`User ${actionLabel}d successfully`);
+      setConfirmOpen(false);
+      setSelectedUser(null);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         toast.error("You do not have permission to change user status");
@@ -73,6 +80,11 @@ export const AdminUsers = () => {
     } finally {
       setUpdatingUserId(null);
     }
+  };
+
+  const openStatusConfirmation = (targetUser: AdminUser) => {
+    setSelectedUser(targetUser);
+    setConfirmOpen(true);
   };
 
   const stats = {
@@ -214,7 +226,7 @@ export const AdminUsers = () => {
                         <td className="px-6 py-4 text-right">
                           <button
                             type="button"
-                            onClick={() => handleToggleStatus(user)}
+                            onClick={() => openStatusConfirmation(user)}
                             disabled={
                               updatingUserId === user.id || (!user.active && user.id === currentUser?.id) || loading
                             }
@@ -242,6 +254,26 @@ export const AdminUsers = () => {
           )}
         </div>
       </div>
+
+      <ConfirmationDialog
+        open={confirmOpen}
+        title={selectedUser?.active ? "Deactivate User" : "Reactivate User"}
+        message={
+          selectedUser?.active
+            ? `Are you sure you want to deactivate ${selectedUser.fullName}? They will not be able to log in.`
+            : `Are you sure you want to reactivate ${selectedUser?.fullName}? They will be able to log in again.`
+        }
+        confirmText={selectedUser?.active ? "Deactivate" : "Reactivate"}
+        confirmColor={selectedUser?.active ? "error" : "primary"}
+        loading={!!updatingUserId}
+        onConfirm={handleToggleStatus}
+        onClose={() => {
+          if (!updatingUserId) {
+            setConfirmOpen(false);
+            setSelectedUser(null);
+          }
+        }}
+      />
     </DashboardLayout>
   );
 };

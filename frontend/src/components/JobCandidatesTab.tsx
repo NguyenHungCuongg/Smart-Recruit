@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FaPlus, FaTimes, FaUserPlus, FaChartLine } from "react-icons/fa";
 import { CandidateSelectItem } from "./CandidateSelectItem";
 import { CVSelectItem } from "./CVSelectItem";
+import { ConfirmationDialog } from "./ConfirmationDialog";
 import { LoadingSection } from "./LoadingSection";
 import { LoadingSpinner } from "./LoadingSpinner";
 import toast from "react-hot-toast";
@@ -33,6 +34,7 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showEvaluationConfirm, setShowEvaluationConfirm] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
   const [selectedCV, setSelectedCV] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,11 +106,11 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
       return;
     }
 
-    const confirm = window.confirm(
-      `Run evaluation for ${applications.length} candidate(s)? This will send their CVs to the ML service for scoring.`,
-    );
+    setShowEvaluationConfirm(true);
+  };
 
-    if (!confirm) return;
+  const confirmRunEvaluation = async () => {
+    setShowEvaluationConfirm(false);
 
     try {
       setEvaluating(true);
@@ -225,6 +227,21 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
           </button>
         </div>
       )}
+
+      <ConfirmationDialog
+        open={showEvaluationConfirm}
+        title="Run Evaluation"
+        message={`Run evaluation for ${applications.length} candidate(s)? This will send their CVs to the ML service for scoring.`}
+        confirmText="Run Evaluation"
+        confirmColor="primary"
+        loading={evaluating}
+        onConfirm={confirmRunEvaluation}
+        onClose={() => {
+          if (!evaluating) {
+            setShowEvaluationConfirm(false);
+          }
+        }}
+      />
 
       {/* Add Candidate Modal */}
       {showModal && (
