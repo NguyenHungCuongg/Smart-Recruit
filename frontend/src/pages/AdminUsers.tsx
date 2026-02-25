@@ -1,53 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { LoadingSection } from "../components/LoadingSection";
 import { FaSistrix, FaPlus, FaRegPenToSquare, FaRegTrashCan } from "react-icons/fa6";
+import toast from "react-hot-toast";
+import adminUserService from "../services/adminUserService";
+import type { AdminUser } from "../services/adminUserService";
 
 export const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<"ALL" | "ADMIN" | "RECRUITER">("ALL");
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const users = [
-    {
-      id: 1,
-      fullName: "Admin User",
-      email: "admin@smartrecruit.com",
-      role: "ADMIN",
-      active: true,
-      createdAt: "2024-01-15",
-      lastLogin: "2024-02-13 14:30",
-      jobCount: 0,
-    },
-    {
-      id: 2,
-      fullName: "John Smith",
-      email: "john.smith@company.com",
-      role: "RECRUITER",
-      active: true,
-      createdAt: "2024-01-20",
-      lastLogin: "2024-02-13 10:15",
-      jobCount: 12,
-    },
-    {
-      id: 3,
-      fullName: "Sarah Johnson",
-      email: "sarah.j@company.com",
-      role: "RECRUITER",
-      active: true,
-      createdAt: "2024-02-01",
-      lastLogin: "2024-02-12 16:45",
-      jobCount: 8,
-    },
-    {
-      id: 4,
-      fullName: "Mike Davis",
-      email: "mike.d@company.com",
-      role: "RECRUITER",
-      active: false,
-      createdAt: "2024-01-10",
-      lastLogin: "2024-01-25 09:30",
-      jobCount: 5,
-    },
-  ];
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await adminUserService.getAll();
+      setUsers(data);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        toast.error("You do not have permission to access user management");
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to load users");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -57,8 +41,12 @@ export const AdminUsers = () => {
     return matchesSearch && matchesRole;
   });
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeColor = (role: AdminUser["role"]) => {
     return role === "ADMIN" ? "bg-destructive/20 text-destructive" : "bg-primary/20 text-primary";
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
   };
 
   const stats = {
@@ -137,78 +125,89 @@ export const AdminUsers = () => {
 
         {/* Users Table */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-secondary/50 border-b border-border">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">User</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Role</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Jobs</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Created</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Last Login</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-secondary/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-bold">
-                          {user.fullName.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">{user.fullName}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {user.active ? (
-                        <span className="px-3 py-1 bg-status-active/20 text-status-active rounded-full text-xs font-medium border border-status-active/20">
-                          ACTIVE
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-status-inactive/20 text-status-inactive rounded-full text-xs font-medium">
-                          INACTIVE
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-foreground font-medium">{user.jobCount}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-muted-foreground">{user.createdAt}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-muted-foreground">{user.lastLogin}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Edit">
-                          <FaRegPenToSquare className="w-4 h-4 text-primary" />
-                        </button>
-                        <button className="p-2 hover:bg-destructive/10 rounded-lg transition-colors" title="Delete">
-                          <FaRegTrashCan className="w-4 h-4 text-destructive" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {loading ? (
+            <LoadingSection />
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-secondary/50 border-b border-border">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">User</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Role</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Jobs</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Created</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Last Login</th>
+                      <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-secondary/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-linear-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-bold">
+                              {user.fullName.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">{user.fullName}</p>
+                              <p className="text-sm text-muted-foreground">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}
+                          >
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {user.active ? (
+                            <span className="px-3 py-1 bg-status-active/20 text-status-active rounded-full text-xs font-medium border border-status-active/20">
+                              ACTIVE
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 bg-status-inactive/20 text-status-inactive rounded-full text-xs font-medium">
+                              INACTIVE
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-foreground font-medium">{user.jobCount}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-muted-foreground">{formatDate(user.createdAt)}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-muted-foreground">
+                            {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
+                              title="Delete"
+                              disabled
+                            >
+                              <FaRegTrashCan className="w-4 h-4 text-destructive" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-          {filteredUsers.length === 0 && (
-            <div className="p-12 text-center">
-              <p className="text-muted-foreground">No users found</p>
-            </div>
+              {filteredUsers.length === 0 && (
+                <div className="p-12 text-center">
+                  <p className="text-muted-foreground">No users found</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
