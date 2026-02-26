@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import toast from "react-hot-toast";
+import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 
 export const Login = () => {
@@ -20,8 +21,11 @@ export const Login = () => {
       await login(formData.email, formData.password);
       toast.success("Login successful!");
       navigate("/dashboard");
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
+    } catch (error: unknown) {
+      const errorMessage = axios.isAxiosError(error)
+        ? ((error.response?.data as { message?: string } | undefined)?.message ??
+          "Login failed. Please check your credentials.")
+        : "Login failed. Please check your credentials.";
       toast.error(errorMessage);
       console.error("Login error:", error);
     } finally {

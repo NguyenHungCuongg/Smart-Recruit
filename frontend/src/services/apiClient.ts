@@ -33,7 +33,12 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const requestUrl: string = error.config?.url || "";
+    const isAuthRequest = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register");
+    const isAuthPage = window.location.pathname === "/login" || window.location.pathname === "/register";
+
+    if (status === 401 && !isAuthRequest && !isAuthPage) {
       // Token expired or invalid - clear auth data
       localStorage.removeItem("token");
       localStorage.removeItem("user");
