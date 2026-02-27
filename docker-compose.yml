@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # PostgreSQL Database
   postgres:
@@ -32,11 +30,51 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartrecruit
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      JWT_SECRET: smartrecruit_super_secret_change_me
+      JWT_EXPIRATION: 86400000
+      ML_SERVICE_URL: http://ml:8000
+      INIT_ADMIN_EMAIL: admin@smartrecruit.com
+      INIT_ADMIN_PASSWORD: Admin@123
+      INIT_ADMIN_FULL_NAME: Administrator
+      UPLOAD_DIR: /app/uploads
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      ml:
+        condition: service_started
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - smartrecruit-network
+    restart: unless-stopped
+
+  # ML Service (FastAPI)
+  ml:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    container_name: smartrecruit-ml
+    ports:
+      - "8000:8000"
+    networks:
+      - smartrecruit-network
+    restart: unless-stopped
+
+  # Frontend Service (React + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: smartrecruit-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - smartrecruit-network
     restart: unless-stopped
@@ -47,3 +85,4 @@ networks:
 
 volumes:
   postgres_data:
+  backend_uploads:
