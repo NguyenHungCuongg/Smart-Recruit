@@ -1,5 +1,7 @@
 package com.smartrecruit.backend.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartrecruit.backend.dto.error.ApiErrorResponse;
 import com.smartrecruit.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +23,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.io.IOException;
+import java.time.Instant;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -29,6 +34,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,14 +55,22 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.getWriter().write("{\"error\":\"UNAUTHORIZED\",\"message\":\"Authentication is required\"}");
+                        writeErrorResponse(
+                            response,
+                            HttpStatus.UNAUTHORIZED,
+                            "UNAUTHORIZED",
+                            "Authentication is required",
+                            request.getRequestURI()
+                        );
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpStatus.FORBIDDEN.value());
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            response.getWriter().write("{\"error\":\"FORBIDDEN\",\"message\":\"You do not have permission to access this resource\"}");
+                        writeErrorResponse(
+                            response,
+                            HttpStatus.FORBIDDEN,
+                            "FORBIDDEN",
+                            "You do not have permission to access this resource",
+                            request.getRequestURI()
+                        );
                         })
                 )
                 .authenticationProvider(authenticationProvider())
@@ -80,5 +94,25 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    private void writeErrorResponse(
+            jakarta.servlet.http.HttpServletResponse response,
+            HttpStatus status,
+            String error,
+            String message,
+            String path
+    ) throws IOException {
+        ApiErrorResponse body = ApiErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(status.value())
+                .error(error)
+                .message(message)
+                .path(path)
+                .build();
+
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        objectMapper.writeValue(response.getWriter(), body);
     }
 }

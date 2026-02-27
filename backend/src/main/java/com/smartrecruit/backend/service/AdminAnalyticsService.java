@@ -88,10 +88,13 @@ public class AdminAnalyticsService {
     ) {
         LocalDate now = LocalDate.now();
         List<YearMonth> months = new ArrayList<>();
+
+        // Lấy ra 6 tháng gần nhất (bao gồm tháng hiện tại)
         for (int index = 5; index >= 0; index--) {
             months.add(YearMonth.from(now.minusMonths(index)));
         }
 
+        // Tạo Map để đếm số lượng jobs, candidates, evaluations theo từng tháng bằng cách sử dụng YearMonth làm key và đếm số lượng tương ứng
         Map<YearMonth, Long> jobsByMonth = new HashMap<>();
         for (JobDescription job : jobs) {
             if (job.getCreatedAt() == null) {

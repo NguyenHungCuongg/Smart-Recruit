@@ -2,19 +2,15 @@ package com.smartrecruit.backend.controller;
 
 import com.smartrecruit.backend.dto.evaluation.EvaluationRequest;
 import com.smartrecruit.backend.dto.evaluation.EvaluationResponse;
-import com.smartrecruit.backend.exception.MLServiceException;
 import com.smartrecruit.backend.service.EvaluationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -27,7 +23,7 @@ public class EvaluationController {
 
     @PostMapping("/jobs/{jobId}/evaluate")
     @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
-    public ResponseEntity<?> evaluateJob(
+    public ResponseEntity<EvaluationResponse> evaluateJob(
             @PathVariable UUID jobId,
             @Valid @RequestBody EvaluationRequest request
     ) {
@@ -36,29 +32,14 @@ public class EvaluationController {
         // Đảm bảo jobId trong path và trong body request khớp nhau bằng cách override jobId trong request bằng jobId từ path
         request.setJobId(jobId);
 
-        try {
-            EvaluationResponse response = evaluationService.evaluateCandidatesForJob(jobId, request);
-            log.info("Evaluation completed for job: {}. Total: {}, Success: {}, Failed: {}", 
-                    jobId, 
-                    response.getTotalEvaluated(),
-                    response.getSuccessCount(), 
-                    response.getFailureCount());
-            
-            return ResponseEntity.ok(response);
-        } catch (MLServiceException e) {
-            log.error("ML Service error during evaluation: {}", e.getMessage());
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "ML_SERVICE_UNAVAILABLE");
-            errorResponse.put("message", e.getMessage());
-            errorResponse.put("details", "Please ensure the ML Service is running and accessible, then try again.");
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
-        } catch (RuntimeException e) {
-            log.error("Evaluation failed for job: {}", jobId, e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "EVALUATION_FAILED");
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        }
+        EvaluationResponse response = evaluationService.evaluateCandidatesForJob(jobId, request);
+        log.info("Evaluation completed for job: {}. Total: {}, Success: {}, Failed: {}",
+                jobId,
+                response.getTotalEvaluated(),
+                response.getSuccessCount(),
+                response.getFailureCount());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/jobs/{jobId}/history")
@@ -67,14 +48,9 @@ public class EvaluationController {
             @PathVariable UUID jobId
     ) {
         log.info("Fetching evaluation history for job: {}", jobId);
-        
-        try {
-            List<EvaluationResponse> history = evaluationService.getEvaluationHistory(jobId);
-            return ResponseEntity.ok(history);
-        } catch (RuntimeException e) {
-            log.error("Failed to fetch evaluation history for job: {}", jobId, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+
+        List<EvaluationResponse> history = evaluationService.getEvaluationHistory(jobId);
+        return ResponseEntity.ok(history);
     }
 
     @GetMapping("/jobs/{jobId}/latest")
@@ -83,14 +59,9 @@ public class EvaluationController {
             @PathVariable UUID jobId
     ) {
         log.info("Fetching latest evaluation for job: {}", jobId);
-        
-        try {
-            EvaluationResponse response = evaluationService.getLatestEvaluation(jobId);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            log.error("Failed to fetch latest evaluation for job: {}", jobId, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+
+        EvaluationResponse response = evaluationService.getLatestEvaluation(jobId);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/jobs/{jobId}/re-evaluate")
@@ -105,13 +76,8 @@ public class EvaluationController {
                 .forceReEvaluation(true)
                 .build();
 
-        try {
-            EvaluationResponse response = evaluationService.evaluateCandidatesForJob(jobId, request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            log.error("Re-evaluation failed for job: {}", jobId, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        EvaluationResponse response = evaluationService.evaluateCandidatesForJob(jobId, request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{evaluationId}")
@@ -120,13 +86,8 @@ public class EvaluationController {
             @PathVariable UUID evaluationId
     ) {
         log.info("Fetching evaluation: {}", evaluationId);
-        
-        try {
-            EvaluationResponse response = evaluationService.getEvaluationById(evaluationId);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            log.error("Failed to fetch evaluation: {}", evaluationId, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+
+        EvaluationResponse response = evaluationService.getEvaluationById(evaluationId);
+        return ResponseEntity.ok(response);
     }
 }
