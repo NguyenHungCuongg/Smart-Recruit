@@ -3,6 +3,7 @@ import { FaRegFile } from "react-icons/fa6";
 import type { CVSummary } from "../services/candidateService";
 import candidateService from "../services/candidateService";
 import { toast } from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 
 interface CandidateCVsTabProps {
   cvs: CVSummary[];
@@ -24,7 +25,7 @@ export const CandidateCVsTab = ({ cvs, candidateId, onCVUploaded }: CandidateCVs
       onCVUploaded();
     } catch (error) {
       console.error("Error uploading CV:", error);
-      toast.error("Failed to upload CV");
+      toast.error(parseApiError(error, "Failed to upload CV"));
     } finally {
       setUploading(false);
       event.target.value = ""; // Reset input

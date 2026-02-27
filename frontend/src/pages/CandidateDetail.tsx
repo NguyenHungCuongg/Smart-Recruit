@@ -8,6 +8,7 @@ import { GrMailOption, GrPhone } from "react-icons/gr";
 import candidateService, { type Candidate, type CVSummary } from "../services/candidateService";
 import applicationService, { type Application } from "../services/applicationService";
 import { toast } from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 
 export const CandidateDetail = () => {
   const { id } = useParams();
@@ -37,7 +38,7 @@ export const CandidateDetail = () => {
       setApplications(applicationsData);
     } catch (error) {
       console.error("Error loading candidate data:", error);
-      toast.error("Failed to load candidate details");
+      toast.error(parseApiError(error, "Failed to load candidate details"));
     } finally {
       setLoading(false);
     }

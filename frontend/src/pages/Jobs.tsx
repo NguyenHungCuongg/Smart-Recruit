@@ -11,6 +11,7 @@ import type { Job } from "../services/jobService"; //Lấy Interface Job
 import applicationService from "../services/applicationService";
 import evaluationService from "../services/evaluationService";
 import toast from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 
 interface JobWithStats extends Job {
   candidates: number;
@@ -57,8 +58,7 @@ export const Jobs = () => {
 
       setJobs(jobsWithStats);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load jobs";
-      toast.error(message);
+      toast.error(parseApiError(error, "Failed to load jobs"));
     } finally {
       setLoading(false);
     }

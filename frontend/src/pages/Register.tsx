@@ -4,6 +4,7 @@ import { Logo } from "../components/Logo";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { authService } from "../services/authService";
+import { parseApiError } from "../utils/parseApiError";
 
 export const Register = () => {
   const [formData, setFormData] = useState({
@@ -45,9 +46,8 @@ export const Register = () => {
       // Auto login after registration
       await login(formData.email, formData.password);
       navigate("/dashboard");
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
-      toast.error(errorMessage);
+    } catch (error: unknown) {
+      toast.error(parseApiError(error, "Registration failed. Please try again."));
       console.error("Registration error:", error);
     } finally {
       setIsLoading(false);

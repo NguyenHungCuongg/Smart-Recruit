@@ -6,6 +6,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FaArrowLeft, FaUpload, FaFileAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
 import jobService from "../services/jobService";
+import { parseApiError } from "../utils/parseApiError";
 
 export const JobNew = () => {
   const navigate = useNavigate();
@@ -117,8 +118,7 @@ export const JobNew = () => {
       toast.success("Job created successfully!");
       navigate(`/jobs/${job.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create job";
-      toast.error(message);
+      toast.error(parseApiError(error, "Failed to create job"));
     } finally {
       setSubmitting(false);
     }

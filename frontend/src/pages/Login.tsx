@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import toast from "react-hot-toast";
-import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
+import { parseApiError } from "../utils/parseApiError";
 
 export const Login = () => {
   const [formData, setFormData] = useState({
@@ -22,11 +22,7 @@ export const Login = () => {
       toast.success("Login successful!");
       navigate("/dashboard");
     } catch (error: unknown) {
-      const errorMessage = axios.isAxiosError(error)
-        ? ((error.response?.data as { message?: string } | undefined)?.message ??
-          "Login failed. Please check your credentials.")
-        : "Login failed. Please check your credentials.";
-      toast.error(errorMessage);
+      toast.error(parseApiError(error, "Login failed. Please check your credentials."));
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);

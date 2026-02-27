@@ -8,6 +8,7 @@ import { RecentEvaluationListItem } from "../components/RecentEvaluationListItem
 import { LoadingSection } from "../components/LoadingSection";
 import { FaBriefcase, FaPeopleGroup, FaChartLine, FaStar } from "react-icons/fa6";
 import toast from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 import jobService from "../services/jobService";
 import candidateService from "../services/candidateService";
 import applicationService from "../services/applicationService";
@@ -141,7 +142,7 @@ export const Dashboard = () => {
       setRecentJobs(recentJobsData);
       setRecentEvaluations(recentEvaluationsData);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load dashboard data");
+      toast.error(parseApiError(error, "Failed to load dashboard data"));
     } finally {
       setLoading(false);
     }

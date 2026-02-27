@@ -11,6 +11,7 @@ import applicationService from "../services/applicationService";
 import type { Application } from "../services/applicationService";
 import candidateService from "../services/candidateService";
 import evaluationService from "../services/evaluationService";
+import { getApiErrorCode, parseApiError } from "../utils/parseApiError";
 
 interface JobCandidatesTabProps {
   jobId: string;
@@ -50,8 +51,8 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
       setLoading(true);
       const apps = await applicationService.getByJobId(jobId);
       setApplications(apps);
-    } catch {
-      toast.error("Failed to load applications");
+    } catch (error) {
+      toast.error(parseApiError(error, "Failed to load applications"));
     } finally {
       setLoading(false);
     }
@@ -72,8 +73,8 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
         }),
       );
       setAllCandidates(candidatesWithCVs.filter((c) => c.cvs.length > 0));
-    } catch {
-      toast.error("Failed to load candidates");
+    } catch (error) {
+      toast.error(parseApiError(error, "Failed to load candidates"));
     }
   };
 
@@ -95,8 +96,8 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
       setSelectedCV(null);
       setSearchTerm("");
       loadApplications(); // Reload applications
-    } catch {
-      toast.error("Failed to add candidate to job");
+    } catch (error) {
+      toast.error(parseApiError(error, "Failed to add candidate to job"));
     }
   };
 
@@ -120,15 +121,12 @@ export const JobCandidatesTab = ({ jobId }: JobCandidatesTabProps) => {
       toast.success("Evaluation completed successfully!");
       navigate(`/evaluations/${evaluation.evaluationId}`);
     } catch (error: unknown) {
-      // Extract error message from response
-      const err = error as { response?: { data?: { message?: string; error?: string } }; message?: string };
-      const errorMessage = err?.response?.data?.message || err?.message || "Failed to run evaluation";
-      const errorCode = err?.response?.data?.error;
+      const errorCode = getApiErrorCode(error);
 
       if (errorCode === "ML_SERVICE_UNAVAILABLE") {
         toast.error("ML Service is not available. Please ensure it is running and try again.");
       } else {
-        toast.error(errorMessage);
+        toast.error(parseApiError(error, "Failed to run evaluation"));
       }
     } finally {
       setEvaluating(false);

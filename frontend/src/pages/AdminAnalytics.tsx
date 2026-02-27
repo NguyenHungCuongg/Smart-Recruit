@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { AdminStatCard } from "../components/AdminStatCard";
 import { LoadingSection } from "../components/LoadingSection";
 import { FaBriefcase, FaPeopleGroup, FaChartLine, FaStar, FaTimeline } from "react-icons/fa6";
 import toast from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 import adminAnalyticsService, {
   type AdminAnalyticsResponse,
   type AdminMonthlyActivity,
@@ -24,12 +24,7 @@ export const AdminAnalytics = () => {
       const response = await adminAnalyticsService.getAnalytics();
       setAnalytics(response);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = (error.response?.data as { message?: string } | undefined)?.message;
-        toast.error(message ?? "Failed to load analytics");
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to load analytics");
-      }
+      toast.error(parseApiError(error, "Failed to load analytics"));
     } finally {
       setLoading(false);
     }

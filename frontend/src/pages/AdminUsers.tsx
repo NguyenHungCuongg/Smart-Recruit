@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { LoadingSection } from "../components/LoadingSection";
 import { ConfirmationDialog } from "../components/ConfirmationDialog";
@@ -8,6 +7,7 @@ import toast from "react-hot-toast";
 import adminUserService from "../services/adminUserService";
 import type { AdminUser } from "../services/adminUserService";
 import { useAuth } from "../hooks/useAuth";
+import { parseApiError } from "../utils/parseApiError";
 
 export const AdminUsers = () => {
   const { user: currentUser } = useAuth();
@@ -29,11 +29,7 @@ export const AdminUsers = () => {
       const data = await adminUserService.getAll();
       setUsers(data);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 403) {
-        toast.error("You do not have permission to access user management");
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to load users");
-      }
+      toast.error(parseApiError(error, "Failed to load users"));
     } finally {
       setLoading(false);
     }
@@ -69,14 +65,7 @@ export const AdminUsers = () => {
       setConfirmOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 403) {
-        toast.error("You do not have permission to change user status");
-      } else if (axios.isAxiosError(error) && error.response?.status === 400) {
-        const message = (error.response.data as { message?: string } | undefined)?.message;
-        toast.error(message || `Failed to ${actionLabel} user`);
-      } else {
-        toast.error(error instanceof Error ? error.message : `Failed to ${actionLabel} user`);
-      }
+      toast.error(parseApiError(error, `Failed to ${actionLabel} user`));
     } finally {
       setUpdatingUserId(null);
     }

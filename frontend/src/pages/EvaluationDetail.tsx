@@ -5,6 +5,7 @@ import { EvaluationResultCard } from "../components/EvaluationResultCard";
 import { LoadingSection } from "../components/LoadingSection";
 import evaluationService, { type Evaluation } from "../services/evaluationService";
 import { toast } from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 
 export const EvaluationDetail = () => {
   const { id } = useParams();
@@ -25,7 +26,7 @@ export const EvaluationDetail = () => {
       setEvaluation(data);
     } catch (error) {
       console.error("Error loading evaluation:", error);
-      toast.error("Failed to load evaluation details");
+      toast.error(parseApiError(error, "Failed to load evaluation details"));
     } finally {
       setLoading(false);
     }

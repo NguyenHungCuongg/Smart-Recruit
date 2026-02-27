@@ -6,6 +6,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FaArrowLeft, FaUpload, FaUserPlus, FaPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import candidateService from "../services/candidateService";
+import { parseApiError } from "../utils/parseApiError";
 
 interface CVFile {
   id: string;
@@ -137,8 +138,7 @@ export const CandidateNew = () => {
       toast.success(`Candidate added with ${cvFiles.length} CV(s)!`);
       navigate(`/candidates/${candidate.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to add candidate";
-      toast.error(message);
+      toast.error(parseApiError(error, "Failed to add candidate"));
     } finally {
       setSubmitting(false);
     }

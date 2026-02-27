@@ -8,6 +8,7 @@ import { FaSistrix, FaPlus } from "react-icons/fa6";
 import candidateService from "../services/candidateService";
 import type { Candidate } from "../services/candidateService";
 import toast from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 
 interface CandidateWithStats extends Candidate {
   cvCount: number;
@@ -47,8 +48,7 @@ export const Candidates = () => {
 
       setCandidates(candidatesWithStats);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load candidates";
-      toast.error(message);
+      toast.error(parseApiError(error, "Failed to load candidates"));
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FaPeopleGroup, FaChartLine, FaCalendarDays } from "react-icons/fa6";
 import { GrLocation, GrAchievement } from "react-icons/gr";
 import { JobStatusBadge } from "../components/JobStatusBadge";
@@ -15,6 +15,7 @@ import type { Application } from "../services/applicationService";
 import evaluationService from "../services/evaluationService";
 import type { Evaluation } from "../services/evaluationService";
 import toast from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 
 export const JobDetail = () => {
   const { id } = useParams();
@@ -24,13 +25,7 @@ export const JobDetail = () => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadJobData();
-    }
-  }, [id]);
-
-  const loadJobData = async () => {
+  const loadJobData = useCallback(async () => {
     if (!id) return;
 
     try {
@@ -44,12 +39,17 @@ export const JobDetail = () => {
       setApplications(appsData);
       setEvaluations(evalsData);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load job details";
-      toast.error(message);
+      toast.error(parseApiError(error, "Failed to load job details"));
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      loadJobData();
+    }
+  }, [id, loadJobData]);
 
   const [daysOpen] = useState(() =>
     job ? Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0,

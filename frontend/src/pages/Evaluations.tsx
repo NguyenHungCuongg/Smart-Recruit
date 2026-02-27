@@ -8,6 +8,7 @@ import evaluationService from "../services/evaluationService";
 import type { Evaluation } from "../services/evaluationService";
 import jobService from "../services/jobService";
 import toast from "react-hot-toast";
+import { parseApiError } from "../utils/parseApiError";
 
 export const Evaluations = () => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -36,7 +37,7 @@ export const Evaluations = () => {
 
       setEvaluations(allEvaluations);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load evaluations");
+      toast.error(parseApiError(error, "Failed to load evaluations"));
     } finally {
       setLoading(false);
     }
