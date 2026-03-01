@@ -2,14 +2,19 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python -m venv $VIRTUAL_ENV
+
 # Copy and install Python dependencies
 COPY requirements-ml-service.txt .
-RUN pip install --no-cache-dir --user -r requirements-ml-service.txt
+RUN pip install --no-cache-dir -r requirements-ml-service.txt
 
 FROM python:3.11-slim
 
@@ -21,10 +26,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from builder stage
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /opt/venv /opt/venv
 
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Create non-root user for security
 RUN useradd -m -u 1000 mlservice && \

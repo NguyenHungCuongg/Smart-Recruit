@@ -1,24 +1,4 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: smartrecruit-db
-    environment:
-      POSTGRES_DB: smartrecruit
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - smartrecruit-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Backend Service (Spring Boot)
   backend:
     build:
@@ -27,9 +7,10 @@ services:
     container_name: smartrecruit-backend
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartrecruit
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      JAVA_TOOL_OPTIONS: -Djava.net.preferIPv4Stack=true
+      SPRING_DATASOURCE_URL: ${SUPABASE_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${SUPABASE_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${SUPABASE_DB_PASSWORD}
       JWT_SECRET: smartrecruit_super_secret_change_me
       JWT_EXPIRATION: 86400000
       ML_SERVICE_URL: http://ml:8000
@@ -40,8 +21,6 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
-        condition: service_healthy
       ml:
         condition: service_started
     volumes:
@@ -71,7 +50,7 @@ services:
         VITE_API_BASE_URL: /api
     container_name: smartrecruit-frontend
     ports:
-      - "3000:80"
+      - "5173:80"
     depends_on:
       backend:
         condition: service_started
@@ -84,5 +63,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
   backend_uploads:
