@@ -27,4 +27,6 @@ public class CandidateScoreDTO {
     private String status;
 
     private String errorMessage;
+
+    private CandidateExplainabilityDTO explainability;
 }

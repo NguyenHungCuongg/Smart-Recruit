@@ -34,6 +34,7 @@ public class EvaluationService {
     private final EvaluationHistoryRepository evaluationHistoryRepository;
     private final JobApplicationRepository jobApplicationRepository;
     private final FeatureEngineeringService featureEngineeringService;
+    private final ExplainabilityService explainabilityService;
     private final MLServiceClient mlServiceClient;
     private final SecurityUtils securityUtils;
 
@@ -275,6 +276,12 @@ public class EvaluationService {
 
         for (Evaluation eval : evaluations) {
             Candidate candidate = eval.getCv().getCandidate();
+            boolean failed = "FAILED".equalsIgnoreCase(eval.getModelVersion());
+
+            FeatureVector features = null;
+            if (!failed) {
+            features = featureEngineeringService.extractFeatures(eval.getJob(), eval.getCv());
+            }
             
             CandidateScoreDTO dto = CandidateScoreDTO.builder()
                     .candidateId(candidate.getId())
@@ -284,7 +291,13 @@ public class EvaluationService {
                     .score(eval.getScore().doubleValue())
                     .rank(rank++)
                     .confidence(eval.getConfidence() != null ? eval.getConfidence().doubleValue() : null)
-                    .status("SUCCESS")
+                .status(failed ? "FAILED" : "SUCCESS")
+                .errorMessage(failed ? "Evaluation failed for this candidate" : null)
+                .explainability(failed ? null : explainabilityService.buildExplainability(
+                    features,
+                    eval.getScore().doubleValue(),
+                    eval.getConfidence() != null ? eval.getConfidence().doubleValue() : null
+                ))
                     .build();
             
             candidateScores.add(dto);
