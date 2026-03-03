@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { type CandidateScore } from "../services/evaluationService";
+import { CandidateExplainabilityCard } from "./CandidateExplainabilityCard";
 
 interface EvaluationResultCardProps {
   result: CandidateScore;
@@ -19,6 +20,8 @@ export const EvaluationResultCard = ({ result }: EvaluationResultCardProps) => {
     if (rank === 3) return "from-amber-600 to-amber-800"; // Bronze
     return "from-primary to-accent";
   };
+
+  const explainability = result.explainability;
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg transition-shadow">
@@ -62,6 +65,10 @@ export const EvaluationResultCard = ({ result }: EvaluationResultCardProps) => {
           )}
         </div>
       </div>
+
+      {explainability && (
+        <CandidateExplainabilityCard explainability={explainability} candidateId={result.candidateId} />
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-border">

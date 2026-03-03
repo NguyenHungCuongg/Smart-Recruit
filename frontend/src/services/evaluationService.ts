@@ -1,6 +1,17 @@
 import apiClient from "./apiClient";
 
-// Match backend: CandidateScoreDTO
+export interface CandidateExplainability {
+  skillsScore: number;
+  experienceScore: number;
+  educationScore: number;
+  seniorityScore: number;
+  overallFitScore: number;
+  confidenceBand: "HIGH" | "MEDIUM" | "LOW" | string;
+  strengths: string[];
+  gaps: string[];
+  summary: string;
+}
+
 export interface CandidateScore {
   candidateId: string;
   candidateName: string;
@@ -11,9 +22,9 @@ export interface CandidateScore {
   confidence?: number;
   status: string;
   errorMessage?: string;
+  explainability?: CandidateExplainability;
 }
 
-// Match backend: EvaluationResponse
 export interface Evaluation {
   evaluationId: string;
   jobId: string;
@@ -27,7 +38,6 @@ export interface Evaluation {
   evaluatedBy: string;
 }
 
-// Match backend: EvaluationRequest
 export interface EvaluationRequest {
   jobId: string;
   candidateIds?: string[];
