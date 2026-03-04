@@ -22,6 +22,8 @@ import java.util.Map;
 @Service
 @Slf4j
 public class MLServiceClient {
+
+    private static final String DEFAULT_API_PREFIX = "/api/v1";
     
     private final RestTemplate restTemplate;
     
@@ -33,7 +35,7 @@ public class MLServiceClient {
     }
 
     public PredictionResponse predict(PredictionRequest request) {
-        String url = mlServiceUrl + "/predict";
+        String url = buildMlEndpointUrl("/predict");
         
         log.info("Sending prediction request to ML Service: {} features", 
                  request.getFeatures() != null ? request.getFeatures().size() : 0);
@@ -67,6 +69,15 @@ public class MLServiceClient {
         } catch (HttpClientErrorException e) {
             // Các lỗi 4xx (lỗi Client)
             log.error("ML Service client error ({}): {}", e.getStatusCode(), e.getResponseBodyAsString());
+
+            if (e.getStatusCode().value() == 404) {
+                throw new MLServiceException(
+                    "ML endpoint not found at " + url + ". Please verify ML_SERVICE_URL and API prefix configuration.",
+                    "ML_ENDPOINT_NOT_FOUND",
+                    e
+                );
+            }
+
             throw new MLServiceException(
                 "Invalid request to ML Service",
                 "ML_CLIENT_ERROR",
@@ -103,7 +114,7 @@ public class MLServiceClient {
     }
 
     public boolean isHealthy() {
-        String url = mlServiceUrl + "/health";
+        String url = buildMlEndpointUrl("/health");
         
         try {
             log.debug("Checking ML Service health at {}", url);
@@ -135,5 +146,20 @@ public class MLServiceClient {
 
     public String getServiceUrl() {
         return mlServiceUrl;
+    }
+
+    private String buildMlEndpointUrl(String endpointPath) {
+        String baseUrl = mlServiceUrl != null ? mlServiceUrl.trim() : "";
+
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+
+        if (!baseUrl.matches(".*/api/v\\d+$")) {
+            baseUrl = baseUrl + DEFAULT_API_PREFIX;
+        }
+
+        String normalizedEndpoint = endpointPath.startsWith("/") ? endpointPath : "/" + endpointPath;
+        return baseUrl + normalizedEndpoint;
     }
 }

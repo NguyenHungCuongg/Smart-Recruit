@@ -13,7 +13,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${SUPABASE_DB_PASSWORD}
       JWT_SECRET: smartrecruit_super_secret_change_me
       JWT_EXPIRATION: 86400000
-      ML_SERVICE_URL: http://ml:8000
+      ML_SERVICE_URL: http://ml:8000/api/v1
       INIT_ADMIN_EMAIL: admin@smartrecruit.com
       INIT_ADMIN_PASSWORD: Admin@123
       INIT_ADMIN_FULL_NAME: Administrator

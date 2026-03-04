@@ -107,7 +107,7 @@ public class GlobalExceptionHandler {
                 exception.getErrorCode(),
                 exception.getMessage(),
                 request,
-                List.of("Please ensure the ML Service is running and accessible, then try again.")
+                buildMlErrorDetails(exception)
         );
     }
 
@@ -159,4 +159,19 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(status).body(body);
     }
+
+        private List<String> buildMlErrorDetails(MLServiceException exception) {
+                return switch (exception.getErrorCode()) {
+                        case "ML_ENDPOINT_NOT_FOUND" -> List.of(
+                                        "ML Service is running but endpoint path is incorrect."
+                        );
+                        case "ML_SERVICE_UNAVAILABLE" -> List.of(
+                                        "Please ensure the ML Service is running and reachable from backend, then try again."
+                        );
+                        case "ML_CLIENT_ERROR" -> List.of(
+                                        "Request sent to ML Service is invalid or API contract mismatch."
+                        );
+                        default -> null;
+                };
+        }
 }
