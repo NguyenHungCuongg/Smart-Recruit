@@ -18,6 +18,7 @@ public class CVResponse {
     private UUID id;
     private UUID candidateId;
     private String candidateName;
+    private String fileName;
     private String filePath;
     private String extractedText;
     private CVFeatures features;

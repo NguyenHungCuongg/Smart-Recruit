@@ -14,6 +14,19 @@ interface CandidateCVsTabProps {
 export const CandidateCVsTab = ({ cvs, candidateId, onCVUploaded }: CandidateCVsTabProps) => {
   const [uploading, setUploading] = useState(false);
 
+  const resolveCvName = (cv: CVSummary) => {
+    if (cv.fileName && cv.fileName.trim().length > 0) {
+      return cv.fileName;
+    }
+
+    if (cv.filePath && cv.filePath.trim().length > 0) {
+      const parts = cv.filePath.split(/[\\/]/);
+      return parts[parts.length - 1] || "Unnamed CV";
+    }
+
+    return "Unnamed CV";
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -62,7 +75,7 @@ export const CandidateCVsTab = ({ cvs, candidateId, onCVUploaded }: CandidateCVs
                   <FaRegFile className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">{cv.fileName}</h4>
+                  <h4 className="font-semibold text-foreground mb-1">{resolveCvName(cv)}</h4>
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <span>Uploaded {new Date(cv.uploadedAt).toLocaleDateString()}</span>
                   </div>

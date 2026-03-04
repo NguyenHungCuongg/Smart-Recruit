@@ -28,8 +28,38 @@ export interface CV {
 export interface CVSummary {
   id: string;
   fileName: string;
+  filePath?: string;
   uploadedAt: string;
 }
+
+const extractFileName = (filePath?: string): string => {
+  if (!filePath || filePath.trim().length === 0) {
+    return "Unnamed CV";
+  }
+
+  const parts = filePath.split(/[\\/]/);
+  return parts[parts.length - 1] || "Unnamed CV";
+};
+
+const normalizeCV = (data: Partial<CV>): CV => {
+  return {
+    id: data.id ?? "",
+    candidateId: data.candidateId ?? "",
+    filePath: data.filePath ?? "",
+    fileName: data.fileName?.trim() || extractFileName(data.filePath),
+    uploadedAt: data.uploadedAt ?? new Date().toISOString(),
+    parsedText: data.parsedText,
+  };
+};
+
+const normalizeCVSummary = (data: Partial<CVSummary>): CVSummary => {
+  return {
+    id: data.id ?? "",
+    filePath: data.filePath,
+    fileName: data.fileName?.trim() || extractFileName(data.filePath),
+    uploadedAt: data.uploadedAt ?? new Date().toISOString(),
+  };
+};
 
 const candidateService = {
   getAll: async (): Promise<Candidate[]> => {
@@ -61,17 +91,17 @@ const candidateService = {
     formData.append("file", file);
 
     const response = await apiClient.post(`/candidates/${candidateId}/cvs`, formData);
-    return response.data;
+    return normalizeCV(response.data);
   },
 
   getCVs: async (candidateId: string): Promise<CVSummary[]> => {
     const response = await apiClient.get(`/candidates/${candidateId}/cvs`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data.map(normalizeCVSummary) : [];
   },
 
   getCV: async (candidateId: string, cvId: string): Promise<CV> => {
     const response = await apiClient.get(`/candidates/${candidateId}/cvs/${cvId}`);
-    return response.data;
+    return normalizeCV(response.data);
   },
 
   deleteCV: async (candidateId: string, cvId: string): Promise<void> => {

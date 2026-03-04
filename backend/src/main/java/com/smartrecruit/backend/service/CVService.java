@@ -171,6 +171,7 @@ public class CVService {
                 .id(cv.getId())
                 .candidateId(cv.getCandidate().getId())
                 .candidateName(cv.getCandidate().getFullName())
+                .fileName(extractFileName(cv.getFilePath()))
                 .filePath(cv.getFilePath())
                 .extractedText(cv.getExtractedText())
                 .features(cv.getFeatures())
@@ -181,9 +182,23 @@ public class CVService {
     private CVSummaryResponse toSummaryResponse(CV cv) {
         return CVSummaryResponse.builder()
                 .id(cv.getId())
+                .fileName(extractFileName(cv.getFilePath()))
                 .filePath(cv.getFilePath())
                 .uploadedAt(cv.getUploadedAt())
                 .hasFeatures(cv.getFeatures() != null)
                 .build();
+    }
+
+    private String extractFileName(String filePath) {
+        if (filePath == null || filePath.isBlank()) {
+            return "Unnamed CV";
+        }
+
+        int separatorIndex = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+        if (separatorIndex >= 0 && separatorIndex < filePath.length() - 1) {
+            return filePath.substring(separatorIndex + 1);
+        }
+
+        return filePath;
     }
 }

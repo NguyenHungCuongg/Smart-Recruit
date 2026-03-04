@@ -15,6 +15,7 @@ import java.util.UUID;
 public class CVSummaryResponse {
 
     private UUID id;
+    private String fileName;
     private String filePath;
     private LocalDateTime uploadedAt;
     private boolean hasFeatures;
