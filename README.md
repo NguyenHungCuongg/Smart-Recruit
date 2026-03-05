@@ -49,9 +49,41 @@ docker-compose.yml  # Full-stack orchestration
 
 ## 5) UI-UX
 
-Coming soon...
+### Guest (Public Access)
+
+![Landing Page](docs/screenshots/guest_1.png)
+
+![About Section](docs/screenshots/guest_2.png)
+
+![How It Works](docs/screenshots/guest_3.png)
+
+![Registration](docs/screenshots/guest_4.png)
 
 ---
+
+### Recruiter Dashboard
+
+![Recruiter Dashboard](docs/screenshots/recruiter_1.png)
+
+![Job Management](docs/screenshots/recruiter_2.png)
+
+![CV Upload](docs/screenshots/recruiter_3.png)
+
+![Evaluation Process](docs/screenshots/recruiter_4.png)
+
+![Candidate Ranking](docs/screenshots/recruiter_5.png)
+
+![Candidate Details](docs/screenshots/recruiter_6.png)
+
+---
+
+### Admin Panel
+
+![Admin Dashboard](docs/screenshots/admin_1.png)
+
+![User Management](docs/screenshots/admin_2.png)
+
+## ![System Overview](docs/screenshots/admin_3.png)
 
 ## 6) Run with Docker (recommended)
 
