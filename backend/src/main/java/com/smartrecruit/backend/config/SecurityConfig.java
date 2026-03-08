@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.smartrecruit.backend.dto.error.ApiErrorResponse;
 import com.smartrecruit.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,9 @@ import java.time.Instant;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper ERROR_RESPONSE_OBJECT_MAPPER = JsonMapper.builder()
+            .findAndAddModules()
+            .build();
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
@@ -44,6 +47,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/error").permitAll()  
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/jobs/**").hasAnyRole("RECRUITER", "ADMIN")
@@ -113,7 +117,8 @@ public class SecurityConfig {
                 .build();
 
         response.setStatus(status.value());
+        response.setCharacterEncoding("UTF-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        OBJECT_MAPPER.writeValue(response.getWriter(), body);
+        ERROR_RESPONSE_OBJECT_MAPPER.writeValue(response.getWriter(), body);
     }
 }

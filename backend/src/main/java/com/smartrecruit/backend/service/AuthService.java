@@ -22,7 +22,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    /** Default role for new users when not specified. */
+    // Role mặc định khi đăng ký nếu không có role nào được chỉ định hoặc nếu cố gắng đăng ký với role ADMIN
     public static final RoleType DEFAULT_ROLE = RoleType.RECRUITER;
 
     @Transactional
