@@ -148,6 +148,6 @@ npm run dev
 ## 8) Contact
 
 - **Email**: cuonghungnguyentop@gmail.com
-- **GitHub Issues**: [https://github.com/NguyenHungCuongg/Deep-Thocks/issues](https://github.com/NguyenHungCuongg/Smart-Recruit/issues)
+- **GitHub Issues**: [https://github.com/NguyenHungCuongg/Smart-Recruit/issues](https://github.com/NguyenHungCuongg/Smart-Recruit/issues)
 - **Facebook** : [https://www.facebook.com/cuong.nguyen.813584/](https://www.facebook.com/cuong.nguyen.813584/)
 - **Linkedin** : [https://www.linkedin.com/in/c%C6%B0%E1%BB%9Dng-nguy%E1%BB%85n-76153a333/](https://www.linkedin.com/in/c%C6%B0%E1%BB%9Dng-nguy%E1%BB%85n-76153a333/)
